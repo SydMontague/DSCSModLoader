@@ -8,7 +8,7 @@
 #define SQUIRREL_AWAY(function) SquirrelAway<decltype(function)>::call((void**)function)
 
 // ************************* //
-// ***** PULL HELPERS ***** //
+// ***** PULL HELPERS ****** //
 // ************************* //
 // TODO Needs specializing for each type a squirrel function can return
 template<typename ParamType>
@@ -24,7 +24,7 @@ void pullParamValue<SQInteger&>(HSQUIRRELVM vm, SQInteger& slot, size_t index)
 }
 
 // ************************* //
-// ***** PUSH HELPERS ***** //
+// ***** PUSH HELPERS ****** //
 // ************************* //
 // TODO Needs specializing for each type a squirrel function can return
 template<typename RetType>
@@ -55,7 +55,7 @@ constexpr void static_for(F&& func)
 }
 
 template <typename ...Types>
-constexpr void apply_func_on_tuple(HSQUIRRELVM vm, std::tuple<Types...>& tpl) noexcept
+constexpr void pullInputParams(HSQUIRRELVM vm, std::tuple<Types...>& tpl) noexcept
 {
     static_for<sizeof...(Types)>([&](auto index)
     {
@@ -64,9 +64,9 @@ constexpr void apply_func_on_tuple(HSQUIRRELVM vm, std::tuple<Types...>& tpl) no
     });
 }
 
-// ************************ //
+// *********************** //
 // ***** CALL HELPER ***** //
-// ************************ //
+// *********************** //
 template<typename RetType, typename Func, typename Tuple, size_t... I>
 RetType call_function(Func function, Tuple&& t, std::index_sequence<I...>)
 {
@@ -87,19 +87,17 @@ struct SquirrelFunction {
 template<typename RetType, typename... ParamTypes>
 SQInteger squirrelize(HSQUIRRELVM vm)
 {
-    // Set up the storage unit to hold the parameters we will pull out of the Squirrel VM
-    static const uint8_t n_inputs = sizeof...(ParamTypes);
-    std::tuple<ParamTypes...> inputs;
-
-    //// Get the function (test function defined at top of file)
+    // Get the function
     SQUserPointer userData;
     sq_getuserdata(vm, -1, &userData, nullptr);
     typedef RetType(*fPtr)(ParamTypes...);
     fPtr p = (fPtr)*(void**)userData;
 
-
+    // Set up the storage unit to hold the parameters we will pull out of the Squirrel VM
+    static const uint8_t n_inputs = sizeof...(ParamTypes);
+    std::tuple<ParamTypes...> inputs;
     // Now pull the parameters from the VM
-    apply_func_on_tuple(vm, inputs);
+    pullInputParams(vm, inputs);
 
     // Finally implement the call and return: split on void type
     auto indices = std::make_index_sequence<n_inputs>();

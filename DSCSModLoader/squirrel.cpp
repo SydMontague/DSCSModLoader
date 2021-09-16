@@ -6,115 +6,115 @@
 // ****** Native Offsets ****** //
 // **************************** //
 /*vm*/
-constexpr auto OFF_sq_open = 0x000000;
-constexpr auto OFF_sq_newthread = 0x000000;
-constexpr auto OFF_sq_seterrorhandler = 0x000000;
-constexpr auto OFF_sq_close = 0x000000;
-constexpr auto OFF_sq_setforeignptr = 0x000000;
-constexpr auto OFF_sq_getforeignptr = 0x000000;
-constexpr auto OFF_sq_setprintfunc = 0x000000;
-constexpr auto OFF_sq_getprintfunc = 0x000000;
-constexpr auto OFF_sq_suspendvm = 0x000000;
-constexpr auto OFF_sq_wakeupvm = 0x000000;
-constexpr auto OFF_sq_getvmstate = 0x000000;
+constexpr auto OFF_sq_open = 0x607140;
+constexpr auto OFF_sq_newthread = 0x606FF0;
+constexpr auto OFF_sq_seterrorhandler = 0x607EF0;
+constexpr auto OFF_sq_close = 0x000000; // TODO find
+constexpr auto OFF_sq_setforeignptr = 0x000000; // TODO find
+constexpr auto OFF_sq_getforeignptr = 0x000000; // TODO find
+constexpr auto OFF_sq_setprintfunc = 0x000000; // TODO find
+constexpr auto OFF_sq_getprintfunc = 0x6068C0;
+constexpr auto OFF_sq_suspendvm = 0x000000; // TODO find
+constexpr auto OFF_sq_wakeupvm = 0x608510;
+constexpr auto OFF_sq_getvmstate = 0x606C00;
 
 /*compiler*/
-constexpr auto OFF_sq_compile = 0x000000;
-constexpr auto OFF_sq_compilebuffer = 0x000000;
-constexpr auto OFF_sq_enabledebuginfo = 0x000000;
-constexpr auto OFF_sq_notifyallexceptions = 0x000000;
-constexpr auto OFF_sq_setcompilererrorhandler = 0x000000;
+constexpr auto OFF_sq_compile = 0x605F40;
+constexpr auto OFF_sq_compilebuffer = 0x606060;
+constexpr auto OFF_sq_enabledebuginfo = 0x606190;
+constexpr auto OFF_sq_notifyallexceptions = 0x000000; // TODO find
+constexpr auto OFF_sq_setcompilererrorhandler = 0x607CE0;
 
 /*stack operations*/
-constexpr auto OFF_sq_push = 0x000000;
+constexpr auto OFF_sq_push = 0x607240;
 constexpr auto OFF_sq_pop = 0x616990;
 constexpr auto OFF_sq_poptop = 0x616930;
-constexpr auto OFF_sq_remove = 0x000000;
-constexpr auto OFF_sq_gettop = 0x000000;
-constexpr auto OFF_sq_settop = 0x000000;
-constexpr auto OFF_sq_reservestack = 0x000000;
-constexpr auto OFF_sq_cmp = 0x000000;
-constexpr auto OFF_sq_move = 0x000000;
+constexpr auto OFF_sq_remove = 0x616B40;
+constexpr auto OFF_sq_gettop = 0x606A50;
+constexpr auto OFF_sq_settop = 0x608330;
+constexpr auto OFF_sq_reservestack = 0x000000; // TODO find
+constexpr auto OFF_sq_cmp = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_move = 0x606CD0;
 
 /*object creation handling*/
 constexpr auto OFF_sq_newuserdata = 0x6070C0;
 constexpr auto OFF_sq_newtable = 0x606F50;
-constexpr auto OFF_sq_newarray = 0x000000;
+constexpr auto OFF_sq_newarray = 0x000000; // TODO find/implement
 constexpr auto OFF_sq_newclosure = 0x606D20;
-constexpr auto OFF_sq_setparamscheck = 0x000000;
-constexpr auto OFF_sq_bindenv = 0x000000;
+constexpr auto OFF_sq_setparamscheck = 0x6080D0;
+constexpr auto OFF_sq_bindenv = 0x605B20;
 constexpr auto OFF_sq_pushstring = 0x607410;
 constexpr auto OFF_sq_pushfloat = 0x6072E0;
 constexpr auto OFF_sq_pushinteger = 0x607330;
 constexpr auto OFF_sq_pushbool = 0x607280;
-constexpr auto OFF_sq_pushuserpointer = 0x000000;
+constexpr auto OFF_sq_pushuserpointer = 0x000000; // TODO find/implement
 constexpr auto OFF_sq_pushnull = 0x607380;
-constexpr auto OFF_sq_gettype = 0x000000;
-constexpr auto OFF_sq_getsize = 0x000000;
-constexpr auto OFF_sq_getbase = 0x000000;
-constexpr auto OFF_sq_instanceof = 0x000000;
-constexpr auto OFF_sq_tostring = 0x000000;
-constexpr auto OFF_sq_tobool = 0x000000;
-constexpr auto OFF_sq_getstring = 0x000000;
-constexpr auto OFF_sq_getinteger = 0x6066f0;
-constexpr auto OFF_sq_getfloat = 0x000000;
-constexpr auto OFF_sq_getbool = 0x000000;
-constexpr auto OFF_sq_getthread = 0x000000;
-constexpr auto OFF_sq_getuserpointer = 0x000000;
-constexpr auto OFF_sq_getuserdata = 0x606a90;
-constexpr auto OFF_sq_settypetag = 0x000000;
-constexpr auto OFF_sq_gettypetag = 0x000000;
-constexpr auto OFF_sq_setreleasehook = 0x000000;
-constexpr auto OFF_sq_getscratchpad = 0x000000;
-constexpr auto OFF_sq_getfunctioninfo = 0x000000;
-constexpr auto OFF_sq_getclosureinfo = 0x000000;
-constexpr auto OFF_sq_setnativeclosurename = 0x000000;
-constexpr auto OFF_sq_setinstanceup = 0x000000;
-constexpr auto OFF_sq_getinstanceup = 0x000000;
-constexpr auto OFF_sq_setclassudsize = 0x000000;
-constexpr auto OFF_sq_newclass = 0x000000;
-constexpr auto OFF_sq_createinstance = 0x000000;
-constexpr auto OFF_sq_setattributes = 0x000000;
-constexpr auto OFF_sq_getattributes = 0x000000;
-constexpr auto OFF_sq_getclass = 0x000000;
-constexpr auto OFF_sq_weakref = 0x000000;
-constexpr auto OFF_sq_getdefaultdelegate = 0x000000;
+constexpr auto OFF_sq_gettype = 0x606A60;
+constexpr auto OFF_sq_getsize = 0x6068E0;
+constexpr auto OFF_sq_getbase = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_instanceof = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_tostring = 0x608480;
+constexpr auto OFF_sq_tobool = 0x608430;
+constexpr auto OFF_sq_getstring = 0x6069A0;
+constexpr auto OFF_sq_getinteger = 0x6066F0;
+constexpr auto OFF_sq_getfloat = 0x6065C0;
+constexpr auto OFF_sq_getbool = 0x6063C0;
+constexpr auto OFF_sq_getthread = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_getuserpointer = 0x606B50;
+constexpr auto OFF_sq_getuserdata = 0x606A90;
+constexpr auto OFF_sq_settypetag = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_gettypetag = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_setreleasehook = 0x608220;
+constexpr auto OFF_sq_getscratchpad = 0x6068D0;
+constexpr auto OFF_sq_getfunctioninfo = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_getclosureinfo = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_setnativeclosurename = 0x607FE0;
+constexpr auto OFF_sq_setinstanceup = 0x607F80;
+constexpr auto OFF_sq_getinstanceup = 0x606630;
+constexpr auto OFF_sq_setclassudsize = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_newclass = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_createinstance = 0x6060A0;
+constexpr auto OFF_sq_setattributes = 0x607B10;
+constexpr auto OFF_sq_getattributes = 0x606270;
+constexpr auto OFF_sq_getclass = 0x606410;
+constexpr auto OFF_sq_weakref = 0x608730;
+constexpr auto OFF_sq_getdefaultdelegate = 0x000000; // TODO find/implement
 
 /*object manipulation*/
 constexpr auto OFF_sq_pushroottable = 0x607400;
-constexpr auto OFF_sq_pushregistrytable = 0x000000;
-constexpr auto OFF_sq_pushconsttable = 0x000000;
-constexpr auto OFF_sq_setroottable = 0x000000;
-constexpr auto OFF_sq_setconsttable = 0x000000;
+constexpr auto OFF_sq_pushregistrytable = 0x6073F0;
+constexpr auto OFF_sq_pushconsttable = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_setroottable = 0x6082A0;
+constexpr auto OFF_sq_setconsttable = 0x607CF0;
 constexpr auto OFF_sq_newslot = 0x606E60;
-constexpr auto OFF_sq_deleteslot = 0x000000;
-constexpr auto OFF_sq_set = 0x000000;
-constexpr auto OFF_sq_get = 0x000000;
-constexpr auto OFF_sq_rawget = 0x000000;
-constexpr auto OFF_sq_rawset = 0x000000;
-constexpr auto OFF_sq_rawdeleteslot = 0x000000;
-constexpr auto OFF_sq_arrayappend = 0x000000;
-constexpr auto OFF_sq_arraypop = 0x000000;
-constexpr auto OFF_sq_arrayresize = 0x000000;
-constexpr auto OFF_sq_arrayreverse = 0x000000;
-constexpr auto OFF_sq_arrayremove = 0x000000;
-constexpr auto OFF_sq_arrayinsert = 0x000000;
-constexpr auto OFF_sq_setdelegate = 0x000000;
-constexpr auto OFF_sq_getdelegate = 0x000000;
-constexpr auto OFF_sq_clone = 0x000000;
-constexpr auto OFF_sq_setfreevariable = 0x000000;
-constexpr auto OFF_sq_next = 0x000000;
-constexpr auto OFF_sq_getweakrefval = 0x000000;
-constexpr auto OFF_sq_clear = 0x000000;
+constexpr auto OFF_sq_deleteslot = 0x000000;  // TODO find/implement
+constexpr auto OFF_sq_set = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_get = 0x6061C0;
+constexpr auto OFF_sq_rawget = 0x607620;
+constexpr auto OFF_sq_rawset = 0x620B80;
+constexpr auto OFF_sq_rawdeleteslot = 0x607490;
+constexpr auto OFF_sq_arrayappend = 0x605710;
+constexpr auto OFF_sq_arraypop = 0x605800;
+constexpr auto OFF_sq_arrayresize = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_arrayreverse = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_arrayremove = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_arrayinsert = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_setdelegate = 0x607E00;
+constexpr auto OFF_sq_getdelegate = 0x606500;
+constexpr auto OFF_sq_clone = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_setfreevariable = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_next = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_getweakrefval = 0x606C20;
+constexpr auto OFF_sq_clear = 0x605E20;
 
 /*calls*/
-constexpr auto OFF_sq_call = 0x000000;
-constexpr auto OFF_sq_resume = 0x000000;
-constexpr auto OFF_sq_getlocal = 0x000000;
-constexpr auto OFF_sq_getfreevariable = 0x000000;
-constexpr auto OFF_sq_throwerror = 0x000000;
-constexpr auto OFF_sq_reseterror = 0x000000;
-constexpr auto OFF_sq_getlasterror = 0x000000;
+constexpr auto OFF_sq_call = 0x605D30;
+constexpr auto OFF_sq_resume = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_getlocal = 0x606760;
+constexpr auto OFF_sq_getfreevariable = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_throwerror = 0x6083A0;
+constexpr auto OFF_sq_reseterror = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_getlasterror = 0x606750;
 
 /*raw object handling*/
 constexpr auto OFF_sq_getstackobj = 0x606960;
@@ -122,27 +122,27 @@ constexpr auto OFF_sq_pushobject = 0x607390;
 constexpr auto OFF_sq_addref = 0x6056F0;
 constexpr auto OFF_sq_release = 0x607A70;
 constexpr auto OFF_sq_resetobject = 0x607B00;
-constexpr auto OFF_sq_objtostring = 0x000000;
-constexpr auto OFF_sq_objtobool = 0x000000;
-constexpr auto OFF_sq_objtointeger = 0x000000;
-constexpr auto OFF_sq_objtofloat = 0x000000;
-constexpr auto OFF_sq_getobjtypetag = 0x000000;
+constexpr auto OFF_sq_objtostring = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_objtobool = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_objtointeger = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_objtofloat = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_getobjtypetag = 0x000000; // TODO find/implement
 
 /*GC*/
-constexpr auto OFF_sq_collectgarbage = 0x000000;
+constexpr auto OFF_sq_collectgarbage = 0x605F30;
 
 /*serialization*/
-constexpr auto OFF_sq_writeclosure = 0x000000;
-constexpr auto OFF_sq_readclosure = 0x000000;
+constexpr auto OFF_sq_writeclosure = 0x000000; // TODO find/implement
+constexpr auto OFF_sq_readclosure = 0x607990;
 
 /*mem allocation*/
-constexpr auto OFF_sq_malloc = 0x000000;
-constexpr auto OFF_sq_realloc = 0x000000;
-constexpr auto OFF_sq_free = 0x000000;
+constexpr auto OFF_sq_malloc = 0x608E70;
+constexpr auto OFF_sq_realloc = 0x608E80;
+constexpr auto OFF_sq_free = 0x608E60;
 
 /*debug*/
-constexpr auto OFF_sq_stackinfos = 0x000000;
-constexpr auto OFF_sq_setdebughook = 0x000000;
+constexpr auto OFF_sq_stackinfos = 0x608D60;
+constexpr auto OFF_sq_setdebughook = 0x607D70;
 
 // **************************** //
 // ****** Function Types ****** //
