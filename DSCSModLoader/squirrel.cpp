@@ -2,6 +2,12 @@
 #define SQUIRREL_API extern __declspec(dllexport)
 #include <squirrel/squirrel.h>
 
+#include <assert.h>
+#include <new>
+#include <squirrel/impl/sqstate.h>
+#include <squirrel/impl/sqstring.h>
+#include <squirrel/impl/sqvm.h>
+
 // **************************** //
 // ****** Native Offsets ****** //
 // **************************** //
@@ -12,7 +18,7 @@ constexpr auto OFF_sq_seterrorhandler = 0x607EF0;
 constexpr auto OFF_sq_close = 0x000000; // TODO find
 constexpr auto OFF_sq_setforeignptr = 0x000000; // TODO find
 constexpr auto OFF_sq_getforeignptr = 0x000000; // TODO find
-constexpr auto OFF_sq_setprintfunc = 0x000000; // TODO find
+// constexpr auto OFF_sq_setprintfunc = 0x000000; // self-implemented
 constexpr auto OFF_sq_getprintfunc = 0x6068C0;
 constexpr auto OFF_sq_suspendvm = 0x000000; // TODO find
 constexpr auto OFF_sq_wakeupvm = 0x608510;
@@ -22,7 +28,7 @@ constexpr auto OFF_sq_getvmstate = 0x606C00;
 constexpr auto OFF_sq_compile = 0x605F40;
 constexpr auto OFF_sq_compilebuffer = 0x606060;
 constexpr auto OFF_sq_enabledebuginfo = 0x606190;
-constexpr auto OFF_sq_notifyallexceptions = 0x000000; // TODO find
+// constexpr auto OFF_sq_notifyallexceptions = 0x000000; // self-implemented
 constexpr auto OFF_sq_setcompilererrorhandler = 0x607CE0;
 
 /*stack operations*/
@@ -32,7 +38,7 @@ constexpr auto OFF_sq_poptop = 0x616930;
 constexpr auto OFF_sq_remove = 0x616B40;
 constexpr auto OFF_sq_gettop = 0x606A50;
 constexpr auto OFF_sq_settop = 0x608330;
-constexpr auto OFF_sq_reservestack = 0x000000; // TODO find
+constexpr auto OFF_sq_reservestack = 0x000000; // TODO find/implement
 constexpr auto OFF_sq_cmp = 0x000000; // TODO find/implement
 constexpr auto OFF_sq_move = 0x606CD0;
 
@@ -122,10 +128,10 @@ constexpr auto OFF_sq_pushobject = 0x607390;
 constexpr auto OFF_sq_addref = 0x6056F0;
 constexpr auto OFF_sq_release = 0x607A70;
 constexpr auto OFF_sq_resetobject = 0x607B00;
-constexpr auto OFF_sq_objtostring = 0x000000; // TODO find/implement
-constexpr auto OFF_sq_objtobool = 0x000000; // TODO find/implement
-constexpr auto OFF_sq_objtointeger = 0x000000; // TODO find/implement
-constexpr auto OFF_sq_objtofloat = 0x000000; // TODO find/implement
+// constexpr auto OFF_sq_objtostring = 0x000000; // self-implemented
+// constexpr auto OFF_sq_objtobool = 0x000000; // self-implemented
+// constexpr auto OFF_sq_objtointeger = 0x000000; // self-implemented
+// constexpr auto OFF_sq_objtofloat = 0x000000; // self-implemented
 constexpr auto OFF_sq_getobjtypetag = 0x000000; // TODO find/implement
 
 /*GC*/
@@ -309,7 +315,7 @@ SQUserPointer sq_getforeignptr(HSQUIRRELVM v) {
 	return ((PTR_sq_getforeignptr)((char*)GetModuleHandle(NULL) + OFF_sq_getforeignptr))(v);
 }
 void sq_setprintfunc(HSQUIRRELVM v, SQPRINTFUNCTION printfunc) {
-	return ((PTR_sq_setprintfunc)((char*)GetModuleHandle(NULL) + OFF_sq_setprintfunc))(v, printfunc);
+	_ss(v)->_printfunc = printfunc;
 }
 SQPRINTFUNCTION sq_getprintfunc(HSQUIRRELVM v) {
 	return ((PTR_sq_getprintfunc)((char*)GetModuleHandle(NULL) + OFF_sq_getprintfunc))(v);
@@ -335,7 +341,7 @@ void sq_enabledebuginfo(HSQUIRRELVM v, SQBool enable) {
 	return ((PTR_sq_enabledebuginfo)((char*)GetModuleHandle(NULL) + OFF_sq_enabledebuginfo))(v, enable);
 }
 void sq_notifyallexceptions(HSQUIRRELVM v, SQBool enable) {
-	return ((PTR_sq_notifyallexceptions)((char*)GetModuleHandle(NULL) + OFF_sq_notifyallexceptions))(v, enable);
+	_ss(v)->_notifyallexceptions = enable ? true : false;
 }
 void sq_setcompilererrorhandler(HSQUIRRELVM v, SQCOMPILERERROR f) {
 	return ((PTR_sq_setcompilererrorhandler)((char*)GetModuleHandle(NULL) + OFF_sq_setcompilererrorhandler))(v, f);
@@ -615,16 +621,28 @@ void sq_resetobject(HSQOBJECT* po) {
 	return ((PTR_sq_resetobject)((char*)GetModuleHandle(NULL) + OFF_sq_resetobject))(po);
 }
 const SQChar* sq_objtostring(HSQOBJECT* o) {
-	return ((PTR_sq_objtostring)((char*)GetModuleHandle(NULL) + OFF_sq_objtostring))(o);
+	if (sq_type(*o) == OT_STRING) {
+		return _stringval(*o);
+	}
+	return NULL;
 }
 SQBool sq_objtobool(HSQOBJECT* o) {
-	return ((PTR_sq_objtobool)((char*)GetModuleHandle(NULL) + OFF_sq_objtobool))(o);
+	if (sq_isbool(*o)) {
+		return _integer(*o);
+	}
+	return SQFalse;
 }
 SQInteger sq_objtointeger(HSQOBJECT* o) {
-	return ((PTR_sq_objtointeger)((char*)GetModuleHandle(NULL) + OFF_sq_objtointeger))(o);
+	if (sq_isnumeric(*o)) {
+		return tointeger(*o);
+	}
+	return 0;
 }
 SQFloat sq_objtofloat(HSQOBJECT* o) {
-	return ((PTR_sq_objtofloat)((char*)GetModuleHandle(NULL) + OFF_sq_objtofloat))(o);
+	if (sq_isnumeric(*o)) {
+		return tofloat(*o);
+	}
+	return 0;
 }
 SQRESULT sq_getobjtypetag(HSQOBJECT* o, SQUserPointer* typetag) {
 	return ((PTR_sq_getobjtypetag)((char*)GetModuleHandle(NULL) + OFF_sq_getobjtypetag))(o, typetag);

@@ -10,6 +10,8 @@
 #include <format>
 #include <filesystem>
 
+#include <cstdarg>
+
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
@@ -118,7 +120,22 @@ void DSCSModLoaderImpl::addSquirrelFunction(std::string table, std::string name,
 	BOOST_LOG_TRIVIAL(info) << std::format("Function this.{}.{} added", table, name);
 }
 
+void DebugLog(HSQUIRRELVM vm, const SQChar* msg) {
+	sq_getprintfunc(vm)(vm, msg);
+}
+
+void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...) {
+	char buffer[1024];
+	va_list args;
+	va_start(args, msg);
+	std::vsnprintf(buffer, 1024, msg, args);
+
+	BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
+}
+
 void DSCSModLoaderImpl::squirrelInit(HSQUIRRELVM vm) {
+	sq_setprintfunc(vm, printfunc);
+
 	for (auto const& [key, val] : squirrelMap) {
 
 		SQObject functionTable = SQObject();
@@ -247,6 +264,9 @@ void DSCSModLoaderImpl::init() {
 	BOOST_LOG_TRIVIAL(info) << "initializing DSCSModLoader version 0.0.1...";
 
 	redirectJump(&_squirrelInit, 0x1FA7AE);
+
+	// reenable Debug.Log
+	addSquirrelFunction("Debug", "Log", SQUIRREL_AWAY(DebugLog));
 
 	BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 

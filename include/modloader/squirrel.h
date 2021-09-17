@@ -12,15 +12,49 @@
 // ************************* //
 // TODO Needs specializing for each type a squirrel function can return
 template<typename ParamType>
-void pullParamValue(HSQUIRRELVM vm, ParamType& slot, size_t index)
+int32_t pullParamValue(HSQUIRRELVM vm, ParamType& slot, size_t index)
 {
     // requires specialization
+    return 0;
 }
 
 template<>
-void pullParamValue<SQInteger&>(HSQUIRRELVM vm, SQInteger& slot, size_t index)
+int32_t pullParamValue<SQInteger&>(HSQUIRRELVM vm, SQInteger& slot, size_t index)
 {
     sq_getinteger(vm, index, &slot);
+    return 1;
+}
+
+template<>
+int32_t pullParamValue<SQFloat&>(HSQUIRRELVM vm, SQFloat& slot, size_t index)
+{
+    sq_getfloat(vm, index, &slot);
+    return 1;
+}
+
+template<>
+int32_t pullParamValue<bool&>(HSQUIRRELVM vm, bool& slot, size_t index)
+{
+    uint64_t l;
+    sq_tobool(vm, index, &l);
+    slot = l != 0;
+    return 1;
+}
+
+template<>
+int32_t pullParamValue<HSQUIRRELVM&>(HSQUIRRELVM vm, HSQUIRRELVM& slot, size_t index)
+{
+    slot = vm;
+    return 0;
+}
+
+template<>
+int32_t pullParamValue<const SQChar*&>(HSQUIRRELVM vm, const SQChar*& slot, size_t index)
+{
+    sq_tostring(vm, index);
+    sq_getstring(vm, -1, &slot);
+    sq_pop(vm, 1);
+    return 1;
 }
 
 // ************************* //
@@ -36,6 +70,21 @@ void pushReturnValue(HSQUIRRELVM vm, RetType& value)
 template<>
 void pushReturnValue<SQInteger>(HSQUIRRELVM vm, SQInteger& value) {
     sq_pushinteger(vm, value);
+}
+
+template<>
+void pushReturnValue<SQFloat>(HSQUIRRELVM vm, SQFloat& value) {
+    sq_pushfloat(vm, value);
+}
+
+template<>
+void pushReturnValue<SQBool>(HSQUIRRELVM vm, SQBool& value) {
+    sq_pushbool(vm, value);
+}
+
+template<>
+void pushReturnValue<const SQChar*>(HSQUIRRELVM vm, const SQChar*& value) {
+    sq_pushstring(vm, value, -1);
 }
 
 // ************************* //
@@ -57,10 +106,11 @@ constexpr void static_for(F&& func)
 template <typename ...Types>
 constexpr void pullInputParams(HSQUIRRELVM vm, std::tuple<Types...>& tpl) noexcept
 {
+    uint32_t sqId = 2;
     static_for<sizeof...(Types)>([&](auto index)
     {
         auto& tuple_entry = std::get<index.value>(tpl);
-        pullParamValue<decltype(tuple_entry)>(vm, tuple_entry, index.value + 2);
+        sqId += pullParamValue<decltype(tuple_entry)>(vm, tuple_entry, sqId);
     });
 }
 
