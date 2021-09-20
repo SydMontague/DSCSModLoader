@@ -3,6 +3,7 @@
 
 #include <Windows.h>
 #include "DSCSModLoader.h"
+#include "modloader/utils.h"
 #include "modloader/plugin.h"
 #include <sstream>
 #include <fstream>
@@ -30,96 +31,6 @@ struct SquirrelEntry {
 	SQFUNCTION closurePtr;
 };
 
-class DSCSModLoaderImpl : public DSCSModLoader {
-private:
-	std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
-public:
-	void loadPlugin(std::filesystem::path);
-	void applyPatchFile(std::filesystem::path);
-	void init();
-	void squirrelInit(HSQUIRRELVM);
-
-	void addSquirrelFunction(std::string table, std::string name, void** functionPtr, SQFUNCTION closure);
-	void addSquirrelFunction(std::string table, std::string name, SquirrelFunction data);
-
-};
-
-DSCSModLoaderImpl modLoader;
-
-void _squirrelInit(HSQUIRRELVM vm) {
-	modLoader.squirrelInit(vm);
-}
-
-void patchBytes(const std::vector<uint8_t>& data, const uint64_t offset) {
-	DWORD flag = 0;
-	size_t size = data.size();
-
-	VirtualProtect(BASE_ADDRESS + offset, size, PAGE_EXECUTE_READWRITE, &flag);
-	std::copy_n(data.data(), size, BASE_ADDRESS + offset);
-	VirtualProtect(BASE_ADDRESS + offset, size, flag, &flag);
-}
-
-void redirectJump(const void* target, const uint64_t offset) {
-	std::vector<uint8_t> injectionData = {
-		(uint8_t)0x48, (uint8_t)0xB8, ptr2bytes(target),	// MOV RAX,target
-		(uint8_t)0xFF, (uint8_t)0xE0,						// JMP RAX
-	};
-
-	patchBytes(injectionData, offset);
-}
-
-enum class HexToStringResult {
-	SUCCESS,
-	WRONG_TOKEN_SIZE,
-	INVALID_TOKEN
-};
-
-HexToStringResult parseByteArray(const std::string& str, std::vector<uint8_t>& vector) {
-	std::stringstream sstream(str);
-	std::vector<uint8_t> local;
-
-	while (!sstream.eof()) {
-		std::string val;
-		sstream >> val;
-
-		if (val.size() != 2)
-			return HexToStringResult::WRONG_TOKEN_SIZE;
-
-		std::size_t pos;
-		local.push_back(std::stoi(val, &pos, 16));
-
-		if (pos != val.size())
-			return HexToStringResult::INVALID_TOKEN;
-	}
-
-	vector.insert(vector.end(), local.begin(), local.end());
-	return HexToStringResult::SUCCESS;
-}
-
-void DSCSModLoaderImpl::addSquirrelFunction(std::string table, std::string name, void** functionPtr, SQFUNCTION closure) {
-	SquirrelEntry entry;
-	entry.name = name;
-	entry.functionPtr = functionPtr;
-	entry.closurePtr = closure;
-	
-	squirrelMap.try_emplace(table);
-	squirrelMap[table].push_back(entry);
-
-	BOOST_LOG_TRIVIAL(info) << std::format("Function this.{}.{} added", table, name);
-}
-
-void DSCSModLoaderImpl::addSquirrelFunction(std::string table, std::string name, SquirrelFunction data) {
-	SquirrelEntry entry;
-	entry.name = name;
-	entry.functionPtr = data.function;
-	entry.closurePtr = data.closure;
-
-	squirrelMap.try_emplace(table);
-	squirrelMap[table].push_back(entry);
-
-	BOOST_LOG_TRIVIAL(info) << std::format("Function this.{}.{} added", table, name);
-}
-
 void DebugLog(HSQUIRRELVM vm, const SQChar* msg) {
 	sq_getprintfunc(vm)(vm, msg);
 }
@@ -133,21 +44,75 @@ void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...) {
 	BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
 }
 
+class DSCSModLoaderImpl : public DSCSModLoader {
+private:
+	std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
+public:
+	void loadPlugin(std::filesystem::path);
+	void applyPatchFile(std::filesystem::path);
+	void init();
+	void squirrelInit(HSQUIRRELVM);
+
+	void addSquirrelFunction(std::string table, std::string name, void** functionPtr, SQFUNCTION closure);
+	void addSquirrelFunction(std::string table, std::string name, SquirrelFunction data);
+
+	static void _squirrelInit(HSQUIRRELVM vm);
+};
+
+DSCSModLoaderImpl modLoader;
+
+void DSCSModLoaderImpl::_squirrelInit(HSQUIRRELVM vm) {
+	modLoader.squirrelInit(vm);
+}
+
+void DSCSModLoaderImpl::addSquirrelFunction(std::string table, std::string name, void** functionPtr, SQFUNCTION closure) {
+	SquirrelEntry entry;
+	entry.name = name;
+	entry.functionPtr = functionPtr;
+	entry.closurePtr = closure;
+	
+	squirrelMap.try_emplace(table);
+	squirrelMap[table].push_back(entry);
+
+	BOOST_LOG_TRIVIAL(info) << std::format("Function this.{}.{} registered", table, name);
+}
+
+void DSCSModLoaderImpl::addSquirrelFunction(std::string table, std::string name, SquirrelFunction data) {
+	SquirrelEntry entry;
+	entry.name = name;
+	entry.functionPtr = data.function;
+	entry.closurePtr = data.closure;
+
+	squirrelMap.try_emplace(table);
+	squirrelMap[table].push_back(entry);
+
+	BOOST_LOG_TRIVIAL(info) << std::format("Function this.{}.{} registered", table, name);
+}
+
 void DSCSModLoaderImpl::squirrelInit(HSQUIRRELVM vm) {
 	sq_setprintfunc(vm, printfunc);
 
 	for (auto const& [key, val] : squirrelMap) {
-
 		SQObject functionTable = SQObject();
 		SQObject root = SQObject();
 
 		// function table
 		sq_resetobject(&functionTable);
-		sq_newtable(vm);
+		sq_pushroottable(vm);
+		sq_pushstring(vm, key.c_str(), -1);
+
+		if (SQ_FAILED(sq_get(vm, -2))) {
+			sq_newtable(vm);
+			BOOST_LOG_TRIVIAL(debug) << std::format("Creating table table '{}'.", key);
+		}
+		else
+			BOOST_LOG_TRIVIAL(debug) << std::format("Modifying table '{}'.", key);
+
 		sq_getstackobj(vm, -1, &functionTable);
 		sq_addref(vm, &functionTable);
-		sq_pop(vm, 1);
+		sq_pop(vm, 2);
 
+		// adding functions
 		for (auto const& function : val) {
 			sq_pushobject(vm, functionTable);
 			sq_pushstring(vm, function.name.c_str(), -1);
@@ -158,8 +123,7 @@ void DSCSModLoaderImpl::squirrelInit(HSQUIRRELVM vm) {
 			sq_newslot(vm, -3, SQFalse);
 			sq_pop(vm, 1);
 
-			BOOST_LOG_TRIVIAL(info) << std::format("Function this.{}.{} added", key, function.name);
-			BOOST_LOG_TRIVIAL(info) << std::hex << function.functionPtr << " " << std::hex << function.closurePtr;
+			BOOST_LOG_TRIVIAL(info) << std::format("Function '{}.{}' added", key, function.name);
 		}
 
 		// root table
