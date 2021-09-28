@@ -5,7 +5,9 @@
 #include "DSCSModLoader.h"
 #include "modloader/utils.h"
 #include "modloader/plugin.h"
-#include <sstream>
+#include "dscs/GameInterface.h"
+#include "ScriptExtension.h"
+
 #include <fstream>
 #include <vector>
 #include <format>
@@ -27,8 +29,10 @@ PTR_SteamAPI_Init SteamAPI_Init;
 
 struct SquirrelEntry {
 	std::string name;
-	void** functionPtr;
-	SQFUNCTION closurePtr;
+	void** functionPtr = nullptr;
+	SQFUNCTION closurePtr = nullptr;
+
+	SquirrelEntry(const std::string name, void** functionPtr, const SQFUNCTION closurePtr) : name(name), functionPtr(functionPtr), closurePtr(closurePtr) {}
 };
 
 void DebugLog(HSQUIRRELVM vm, const SQChar* msg) {
@@ -46,47 +50,44 @@ void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...) {
 
 class DSCSModLoaderImpl : public DSCSModLoader {
 private:
+	DSCSModLoaderImpl() {};
+
 	std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
-public:
+	std::vector<BasePlugin*> plugins;
 	void loadPlugin(std::filesystem::path);
 	void applyPatchFile(std::filesystem::path);
 	void init();
 	void squirrelInit(HSQUIRRELVM);
 
-	void addSquirrelFunction(std::string table, std::string name, void** functionPtr, SQFUNCTION closure);
-	void addSquirrelFunction(std::string table, std::string name, SquirrelFunction data);
+public:
+	DSCSModLoaderImpl(const DSCSModLoaderImpl&) = delete;
+	void operator=(const DSCSModLoaderImpl&) = delete;
 
+	void addSquirrelFunction(const std::string& table, const std::string& name, void** functionPtr, SQFUNCTION closure);
+	void addSquirrelFunction(const std::string& table, const std::string& name, SquirrelFunction data);
+
+// static functions to be used as function pointers
+private:
 	static void _squirrelInit(HSQUIRRELVM vm);
+	static DSCSModLoaderImpl instance;
+public:
+	static bool bootstrap();
+
 };
 
-DSCSModLoaderImpl modLoader;
+DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 
 void DSCSModLoaderImpl::_squirrelInit(HSQUIRRELVM vm) {
-	modLoader.squirrelInit(vm);
+	instance.squirrelInit(vm);
 }
 
-void DSCSModLoaderImpl::addSquirrelFunction(std::string table, std::string name, void** functionPtr, SQFUNCTION closure) {
-	SquirrelEntry entry;
-	entry.name = name;
-	entry.functionPtr = functionPtr;
-	entry.closurePtr = closure;
-	
-	squirrelMap.try_emplace(table);
-	squirrelMap[table].push_back(entry);
-
+void DSCSModLoaderImpl::addSquirrelFunction(const std::string& table, const std::string& name, void** functionPtr, SQFUNCTION closure) {
+	squirrelMap[table].push_back({ name, functionPtr, closure });
 	BOOST_LOG_TRIVIAL(info) << std::format("Function this.{}.{} registered", table, name);
 }
 
-void DSCSModLoaderImpl::addSquirrelFunction(std::string table, std::string name, SquirrelFunction data) {
-	SquirrelEntry entry;
-	entry.name = name;
-	entry.functionPtr = data.function;
-	entry.closurePtr = data.closure;
-
-	squirrelMap.try_emplace(table);
-	squirrelMap[table].push_back(entry);
-
-	BOOST_LOG_TRIVIAL(info) << std::format("Function this.{}.{} registered", table, name);
+void DSCSModLoaderImpl::addSquirrelFunction(const std::string& table, const std::string& name, SquirrelFunction data) {
+	addSquirrelFunction(table, name, data.function, data.closure);
 }
 
 void DSCSModLoaderImpl::squirrelInit(HSQUIRRELVM vm) {
@@ -146,9 +147,9 @@ void DSCSModLoaderImpl::squirrelInit(HSQUIRRELVM vm) {
 	}
 }
 
-void DSCSModLoaderImpl::applyPatchFile(std::filesystem::path file) {
+void DSCSModLoaderImpl::applyPatchFile(const std::filesystem::path file) {
 	std::ifstream input(file);
-	std::string filename = file.filename().string();
+	const std::string filename = file.filename().string();
 
 	int lineId = 0;
 	std::string line;
@@ -166,11 +167,11 @@ void DSCSModLoaderImpl::applyPatchFile(std::filesystem::path file) {
 			continue;
 		}
 
-		auto left = line.substr(0, splitPos);
-		auto right = line.substr(splitPos + 1);
+		const auto left = line.substr(0, splitPos);
+		const auto right = line.substr(splitPos + 1);
 
 		std::size_t pos;
-		auto offset = std::stoll(left, &pos, 16);
+		const auto offset = std::stoll(left, &pos, 16);
 
 		if (pos != left.size()) { // offset invalid format
 			BOOST_LOG_TRIVIAL(error) << std::format("[{}:{}] invalid offset, must be a hexadecimal number, e.g. 0x123456", filename, lineId);
@@ -199,15 +200,15 @@ void DSCSModLoaderImpl::applyPatchFile(std::filesystem::path file) {
 	}
 }
 
-void DSCSModLoaderImpl::loadPlugin(std::filesystem::path path) {
-	auto plugin = LoadLibrary(path.string().c_str());
+void DSCSModLoaderImpl::loadPlugin(const std::filesystem::path path) {
+	const auto plugin = LoadLibrary(path.string().c_str());
 
 	if (plugin == nullptr) {
 		BOOST_LOG_TRIVIAL(error) << std::format("Failed to load plugin {}", path.filename().string());
 		return;
 	}
 
-	GetPluginFunction getPluginFunc = (GetPluginFunction) GetProcAddress(plugin, "getPlugin");
+	const GetPluginFunction getPluginFunc = (GetPluginFunction) GetProcAddress(plugin, "getPlugin");
 
 	if (getPluginFunc == nullptr) {
 		FreeLibrary(plugin);
@@ -217,7 +218,7 @@ void DSCSModLoaderImpl::loadPlugin(std::filesystem::path path) {
 
 	BasePlugin* pluginInstance = getPluginFunc(this);
 
-	PluginInfo info = pluginInstance->getPluginInfo();
+	const PluginInfo info = pluginInstance->getPluginInfo();
 	BOOST_LOG_TRIVIAL(info) << std::format("Plugin {} {}.{}.{} loaded.", info.name, info.version.major, info.version.minor, info.version.revision);
 
 	plugins.push_back(pluginInstance);
@@ -229,8 +230,12 @@ void DSCSModLoaderImpl::init() {
 
 	redirectJump(&_squirrelInit, 0x1FA7AE);
 
-	// reenable Debug.Log
+	// script extensions start
 	addSquirrelFunction("Debug", "Log", SQUIRREL_AWAY(DebugLog));
+	addSquirrelFunction("Digimon", "GetScan", SQUIRREL_AWAY(dscs::digimon::GetScan));
+	addSquirrelFunction("Digimon", "AddScan", SQUIRREL_AWAY(dscs::digimon::AddScan));
+	addSquirrelFunction("Digimon", "SetScan", SQUIRREL_AWAY(dscs::digimon::SetScan));
+	// script extensions end
 
 	BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 
@@ -269,19 +274,19 @@ void initializeLogging() {
 	);
 }
 
-bool bootstrap() {
-	bool retVal = SteamAPI_Init();
+bool DSCSModLoaderImpl::bootstrap() {
+	const bool retVal = SteamAPI_Init();
 	initializeLogging();
 	
-	modLoader.init();
+	instance.init();
 	return retVal;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
 	// redirect SteamAPI_Init call to custom initialization function
 	if (fdwReason == DLL_PROCESS_ATTACH) {
-		SteamAPI_Init = *((PTR_SteamAPI_Init*) (BASE_ADDRESS + 0x8C09D0));
-		const void* ptr = bootstrap;
+		SteamAPI_Init = *((PTR_SteamAPI_Init*) (getBaseOffset() + 0x8C09D0));
+		const void* ptr = DSCSModLoaderImpl::bootstrap;
 		std::vector<uint8_t> data = { ptr2bytes(ptr) };
 		patchBytes(data, 0x8C09D0);
 	}

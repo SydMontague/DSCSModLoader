@@ -26,7 +26,6 @@ struct PluginInfo {
 	std::string name; // TODO replace with DSCSString?
 };
 
-
 class BasePlugin {
 public:
 	BasePlugin(DSCSModLoader* modLoader) : modLoader(modLoader) {};
@@ -35,7 +34,7 @@ public:
 	virtual void onEnable() {};
 	virtual void onDisable() {};
 
-	virtual PluginInfo getPluginInfo() = 0;
+	const virtual PluginInfo getPluginInfo() = 0;
 
 	DSCSModLoader* modLoader;
 };
@@ -43,9 +42,6 @@ public:
 class DSCSModLoader {
 public:
 	// squirrel tables
-	virtual void addSquirrelFunction(std::string table, std::string name, void** functionPtr, SQFUNCTION closure) = 0;
-	virtual void addSquirrelFunction(std::string table, std::string name, SquirrelFunction data) = 0;
-
-	std::vector<BasePlugin*> plugins;
-
+	virtual void addSquirrelFunction(const std::string& table, const std::string& name, void** functionPtr, SQFUNCTION closure) = 0;
+	virtual void addSquirrelFunction(const std::string& table, const std::string& name, SquirrelFunction data) = 0;
 };
