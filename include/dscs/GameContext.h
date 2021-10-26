@@ -513,7 +513,6 @@ namespace dscs {
     struct DigimonContext {
         void** functions;
         map<int64_t, ScanData*> scanData;
-        //uint64_t field_0x10;
         int32_t bankSize;
         undefined field_0x1c;
         undefined field_0x1d;
@@ -642,12 +641,31 @@ namespace dscs {
         vector<InventoryItem*> field_0x38;
     };
 
+    struct FlagArray {
+        void** destroy;
+        uint32_t flags[626];
+
+        bool get(int32_t flag) {
+            return (flags[flag >> 5] >> (flag & 0x1F) & 1) != 0;
+        }
+
+        void clear(int32_t flag) {
+            flags[flag >> 5] &= ~(1 << (flag & 0x1F));
+        }
+
+        // not equivalent to Flag.Set, since it doesn't call the achievement check
+        void set(int32_t flag) {
+            flags[flag >> 5] |= (1 << (flag & 0x1F));
+        }
+    };
+
+
     struct GameContext {
         undefined** methods;
-        struct FlagArray* flags;
-        struct DigimonContext* digimonCS;
+        FlagArray* flags;
+        DigimonContext* digimonCS;
         struct GameContext_0x18* unk0x18_CS;
-        struct Inventory* inventoryCS;
+        Inventory* inventoryCS;
         struct Workspace* work;
         struct PlayerStruct* playerCS;
         struct QuestsStruct* questsCS;
@@ -655,9 +673,9 @@ namespace dscs {
         struct Settings* settings;
         struct GameContext_0x50* unk0x50;
         struct GameContext_0x58* unk0x58;
-        struct DigimonContext* digimonHM;
+        DigimonContext* digimonHM;
         struct GameContext_0x18* unk0x18_HM;
-        struct Inventory* inventoryHM;
+        Inventory* inventoryHM;
         struct PlayerStruct* playerHM;
         struct QuestsStruct* questsHM;
         struct DigilineStruct* digilineHM;

@@ -70,6 +70,27 @@ namespace dscs {
 			explicit _Move_tag() = default;
 		};
 
+
+		_Tree() {
+			_Alloc_sentinel_and_proxy();
+		}
+
+		template <class _Any_alloc>
+		_Tree(const _Tree& _Right) {
+			auto&& _Alproxy = _GET_PROXY_ALLOCATOR(_Alnode, _Getal());
+			const auto _Scary = _Get_scary();
+			_Container_proxy_ptr<_Alty> _Proxy(_Alproxy, *_Scary);
+			_Tree_head_scoped_ptr<_Alnode, _Scary_val> _Sentinel(_Getal(), *_Scary);
+			_Copy(_Right, _Copy_tag{});
+			_Sentinel._Release();
+			_Proxy._Release();
+		}
+
+		_Tree(_Tree&& _Right) {
+			_Alloc_sentinel_and_proxy();
+			_Swap_val_excluding_comp(_Right);
+		}
+
 	private:
 		void _Move_assign(_Tree& _Right, _Equal_allocators) noexcept(is_nothrow_move_assignable_v<key_compare>) {
 			clear();

@@ -18,4 +18,6 @@ extern __declspec(dllexport) void patchBytes(const std::vector<uint8_t>& data, c
 
 extern __declspec(dllexport) void redirectJump(const void* target, const uint64_t offset);
 
+extern __declspec(dllexport) void redirectCall(const void* target, const uint64_t offset);
+
 extern __declspec(dllexport) const HexToStringResult parseByteArray(const std::string& str, std::vector<uint8_t>& vector);

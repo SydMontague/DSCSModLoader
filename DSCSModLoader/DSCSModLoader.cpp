@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <vector>
+#include <map>
 #include <format>
 #include <filesystem>
 
@@ -35,6 +36,24 @@ struct SquirrelEntry {
 	SquirrelEntry(const std::string name, void** functionPtr, const SQFUNCTION closurePtr) : name(name), functionPtr(functionPtr), closurePtr(closurePtr) {}
 };
 
+void initializeLogging() {
+	boost::log::add_file_log(
+		boost::log::keywords::file_name = "DSCSModLoader.log",
+		boost::log::keywords::format = (
+			boost::log::expressions::stream
+			<< "[" << std::setw(8) << std::setfill(' ') << boost::log::trivial::severity << "] "
+			<< boost::log::expressions::smessage
+			),
+		boost::log::keywords::auto_flush = true
+	);
+
+	boost::log::core::get()->set_filter
+	(
+		// TODO load from config
+		boost::log::trivial::severity >= boost::log::trivial::info
+	);
+}
+
 void DebugLog(HSQUIRRELVM vm, const SQChar* msg) {
 	sq_getprintfunc(vm)(vm, msg);
 }
@@ -50,14 +69,16 @@ void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...) {
 
 class DSCSModLoaderImpl : public DSCSModLoader {
 private:
-	DSCSModLoaderImpl() {};
-
 	std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
 	std::vector<BasePlugin*> plugins;
+	
+	DSCSModLoaderImpl() {};
+
 	void loadPlugin(std::filesystem::path);
 	void applyPatchFile(std::filesystem::path);
 	void init();
 	void squirrelInit(HSQUIRRELVM);
+	void archiveListInit();
 
 public:
 	DSCSModLoaderImpl(const DSCSModLoaderImpl&) = delete;
@@ -69,6 +90,7 @@ public:
 // static functions to be used as function pointers
 private:
 	static void _squirrelInit(HSQUIRRELVM vm);
+	static void _archiveListInit();
 	static DSCSModLoaderImpl instance;
 public:
 	static bool bootstrap();
@@ -79,6 +101,40 @@ DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 
 void DSCSModLoaderImpl::_squirrelInit(HSQUIRRELVM vm) {
 	instance.squirrelInit(vm);
+}
+
+void DSCSModLoaderImpl::_archiveListInit() {
+	instance.archiveListInit();
+}
+
+void DSCSModLoaderImpl::archiveListInit() {
+	BOOST_LOG_TRIVIAL(info) << "initializing archive list...";
+
+	uint64_t* archiveCount = (uint64_t*) (getBaseOffset() + 0xF20770);
+	char* archiveList = (char*)(getBaseOffset() + 0xF219C0);
+	char** archiveTable = (char**)(getBaseOffset() + 0xF229C0);
+	bool* archiveIsInit = (bool*)(getBaseOffset() + 0xF20656);
+
+	const auto addArchive = [=](const char* name) {
+		strcpy_s(archiveList + (*archiveCount * 0x80), 0x7F, name);
+		archiveTable[*archiveCount] = archiveList + (*archiveCount * 0x80);
+		(*archiveCount)++;
+	};
+
+	using GetControllerTypeFunc = uint64_t(*)();
+	GetControllerTypeFunc getControllerType = (GetControllerTypeFunc)(getBaseOffset() + 0x57BFF0);
+
+	auto controllerType = getControllerType();
+	
+	addArchive("DSDBmod");
+	addArchive("DSDBP");
+	if(controllerType == 1)
+		addArchive("DSDBSP");
+	addArchive("DSDBA");
+	addArchive("DSDBA");
+	addArchive("DSDB");
+
+	BOOST_LOG_TRIVIAL(info) << "Archive list initialized.";
 }
 
 void DSCSModLoaderImpl::addSquirrelFunction(const std::string& table, const std::string& name, void** functionPtr, SQFUNCTION closure) {
@@ -226,7 +282,22 @@ void DSCSModLoaderImpl::loadPlugin(const std::filesystem::path path) {
 }
 
 void DSCSModLoaderImpl::init() {
+	initializeLogging();
+
 	BOOST_LOG_TRIVIAL(info) << "initializing DSCSModLoader version 0.0.1...";
+
+	// TODO make optional via config
+	AllocConsole();
+	freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+	freopen_s((FILE**)stderr, "CONERR$", "w", stderr);
+
+	auto* data = new dscs::DigisterData();
+	//data->map.insert(std::make_pair("useDataBase", "1"));
+	//data->map.insert(std::make_pair("defaultMap", "t3001"));
+	//data->map.insert(std::make_pair("selectStoryMode", "1"));
+	//data->map.insert(std::make_pair("windowsDisplayPlatform", "ORBIS"));
+	//data->map.insert(std::make_pair("isDispSpeed", "1"));*/
+	dscs::getDigisterMap()->map.insert(std::make_pair("digister", data));
 
 	redirectJump(&_squirrelInit, 0x1FA7AE);
 
@@ -236,6 +307,9 @@ void DSCSModLoaderImpl::init() {
 	addSquirrelFunction("Digimon", "AddScan", SQUIRREL_AWAY(dscs::digimon::AddScan));
 	addSquirrelFunction("Digimon", "SetScan", SQUIRREL_AWAY(dscs::digimon::SetScan));
 	// script extensions end
+
+	redirectCall(&_archiveListInit, 0x2CF1BA);
+	redirectJump(getBaseOffset() + 0x2CF2F1, 0x2CF1C6);
 
 	BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 
@@ -256,28 +330,8 @@ void DSCSModLoaderImpl::init() {
 	BOOST_LOG_TRIVIAL(info) << "DSCSModLoader initialized!";
 }
 
-void initializeLogging() {
-	boost::log::add_file_log(
-		boost::log::keywords::file_name = "DSCSModLoader.log",
-		boost::log::keywords::format = (
-			boost::log::expressions::stream
-			<< "[" << std::setw(8) << std::setfill(' ') << boost::log::trivial::severity << "] "
-			<< boost::log::expressions::smessage
-			),
-		boost::log::keywords::auto_flush = true
-	);
-
-	boost::log::core::get()->set_filter
-	(
-		// TODO load from config
-		boost::log::trivial::severity >= boost::log::trivial::info
-	);
-}
-
 bool DSCSModLoaderImpl::bootstrap() {
 	const bool retVal = SteamAPI_Init();
-	initializeLogging();
-	
 	instance.init();
 	return retVal;
 }

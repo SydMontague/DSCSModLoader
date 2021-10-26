@@ -85,35 +85,35 @@ namespace dscs {
         using insert_return_type = _Insert_return_type<iterator, typename _Mybase::node_type>;
     #endif // _HAS_CXX17
 
-        map() : _Mybase(key_compare()) {}
+        map() : _Mybase() {}
 
-        explicit map(const allocator_type& _Al) : _Mybase(key_compare(), _Al) {}
+        explicit map(const allocator_type& _Al) : _Mybase() {}
 
-        map(const map& _Right) : _Mybase(_Right, _Alnode_traits::select_on_container_copy_construction(_Right._Getal())) {}
+        map(const map& _Right) : _Mybase(_Right) {}
 
-        map(const map& _Right, const allocator_type& _Al) : _Mybase(_Right, _Al) {}
+        map(const map& _Right, const allocator_type& _Al) : _Mybase(_Right) {}
 
-        explicit map(const key_compare& _Pred) : _Mybase(_Pred) {}
+        explicit map(const key_compare& _Pred) : _Mybase() {}
 
-        map(const key_compare& _Pred, const allocator_type& _Al) : _Mybase(_Pred, _Al) {}
+        map(const key_compare& _Pred, const allocator_type& _Al) : _Mybase(_Pred) {}
 
         template <class _Iter>
-        map(_Iter _First, _Iter _Last) : _Mybase(key_compare()) {
+        map(_Iter _First, _Iter _Last) : _Mybase() {
             insert(_First, _Last);
         }
 
         template <class _Iter>
-        map(_Iter _First, _Iter _Last, const key_compare& _Pred) : _Mybase(_Pred) {
+        map(_Iter _First, _Iter _Last, const key_compare& _Pred) : _Mybase() {
             insert(_First, _Last);
         }
 
         template <class _Iter>
-        map(_Iter _First, _Iter _Last, const allocator_type& _Al) : _Mybase(key_compare(), _Al) {
+        map(_Iter _First, _Iter _Last, const allocator_type& _Al) : _Mybase() {
             insert(_First, _Last);
         }
 
         template <class _Iter>
-        map(_Iter _First, _Iter _Last, const key_compare& _Pred, const allocator_type& _Al) : _Mybase(_Pred, _Al) {
+        map(_Iter _First, _Iter _Last, const key_compare& _Pred, const allocator_type& _Al) : _Mybase() {
             insert(_First, _Last);
         }
 

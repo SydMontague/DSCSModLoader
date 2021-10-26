@@ -1,3 +1,4 @@
+#include <xstring>
 
 namespace dscs {
     /*
@@ -2280,5 +2281,249 @@ namespace dscs {
     };
 
 
+#if _HAS_CXX17
+    template <class _Iter, class _Alloc = allocator<_Iter_value_t<_Iter>>,
+        enable_if_t<conjunction_v<_Is_iterator<_Iter>, _Is_allocator<_Alloc>>, int> = 0>
+        basic_string(_Iter, _Iter, _Alloc = _Alloc())
+        ->basic_string<_Iter_value_t<_Iter>, char_traits<_Iter_value_t<_Iter>>, _Alloc>;
 
+    template <class _Elem, class _Traits, class _Alloc = allocator<_Elem>,
+        enable_if_t<_Is_allocator<_Alloc>::value, int> = 0>
+        explicit basic_string(basic_string_view<_Elem, _Traits>, const _Alloc & = _Alloc())
+        ->basic_string<_Elem, _Traits, _Alloc>;
+
+    template <class _Elem, class _Traits, class _Alloc = allocator<_Elem>,
+        enable_if_t<_Is_allocator<_Alloc>::value, int> = 0>
+        basic_string(basic_string_view<_Elem, _Traits>, _Guide_size_type_t<_Alloc>, _Guide_size_type_t<_Alloc>,
+            const _Alloc & = _Alloc())->basic_string<_Elem, _Traits, _Alloc>;
+#endif // _HAS_CXX17
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _CONSTEXPR20_CONTAINER void swap(basic_string<_Elem, _Traits, _Alloc>& _Left,
+        basic_string<_Elem, _Traits, _Alloc>& _Right) noexcept /* strengthened */ {
+        _Left.swap(_Right);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        const auto _Left_size = _Left.size();
+        const auto _Right_size = _Right.size();
+        if (_Left.max_size() - _Left_size < _Right_size) {
+            _Xlen_string();
+        }
+
+        return { _String_constructor_concat_tag{}, _Left, _Left.c_str(), _Left_size, _Right.c_str(), _Right_size };
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        _In_z_ const _Elem* const _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        using _Size_type = typename basic_string<_Elem, _Traits, _Alloc>::size_type;
+        const auto _Left_size = _Convert_size<_Size_type>(_Traits::length(_Left));
+        const auto _Right_size = _Right.size();
+        if (_Right.max_size() - _Right_size < _Left_size) {
+            _Xlen_string();
+        }
+
+        return { _String_constructor_concat_tag{}, _Right, _Left, _Left_size, _Right.c_str(), _Right_size };
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        const _Elem _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        const auto _Right_size = _Right.size();
+        if (_Right_size == _Right.max_size()) {
+            _Xlen_string();
+        }
+
+        return { _String_constructor_concat_tag{}, _Right, _STD addressof(_Left), 1, _Right.c_str(), _Right_size };
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, _In_z_ const _Elem* const _Right) {
+        using _Size_type = typename basic_string<_Elem, _Traits, _Alloc>::size_type;
+        const auto _Left_size = _Left.size();
+        const auto _Right_size = _Convert_size<_Size_type>(_Traits::length(_Right));
+        if (_Left.max_size() - _Left_size < _Right_size) {
+            _Xlen_string();
+        }
+
+        return { _String_constructor_concat_tag{}, _Left, _Left.c_str(), _Left_size, _Right, _Right_size };
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const _Elem _Right) {
+        const auto _Left_size = _Left.size();
+        if (_Left_size == _Left.max_size()) {
+            _Xlen_string();
+        }
+
+        return { _String_constructor_concat_tag{}, _Left, _Left.c_str(), _Left_size, _STD addressof(_Right), 1 };
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, basic_string<_Elem, _Traits, _Alloc>&& _Right) {
+        return _STD move(_Right.insert(0, _Left));
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        basic_string<_Elem, _Traits, _Alloc>&& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        return _STD move(_Left.append(_Right));
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        basic_string<_Elem, _Traits, _Alloc>&& _Left, basic_string<_Elem, _Traits, _Alloc>&& _Right) {
+    #if _ITERATOR_DEBUG_LEVEL == 2
+        _STL_VERIFY(_STD addressof(_Left) != _STD addressof(_Right),
+            "You cannot concatenate the same moved string to itself. See "
+            "N4849 [res.on.arguments]/1.3: If a function argument binds to an rvalue reference "
+            "parameter, the implementation may assume that this parameter is a unique reference "
+            "to this argument");
+    #endif // _ITERATOR_DEBUG_LEVEL == 2
+        return { _String_constructor_concat_tag{}, _Left, _Right };
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        _In_z_ const _Elem* const _Left, basic_string<_Elem, _Traits, _Alloc>&& _Right) {
+        return _STD move(_Right.insert(0, _Left));
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        const _Elem _Left, basic_string<_Elem, _Traits, _Alloc>&& _Right) {
+        return _STD move(_Right.insert(0, 1, _Left));
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        basic_string<_Elem, _Traits, _Alloc>&& _Left, _In_z_ const _Elem* const _Right) {
+        return _STD move(_Left.append(_Right));
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER basic_string<_Elem, _Traits, _Alloc> operator+(
+        basic_string<_Elem, _Traits, _Alloc>&& _Left, const _Elem _Right) {
+        _Left.push_back(_Right);
+        return _STD move(_Left);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER bool operator==(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) noexcept {
+        return _Left._Equal(_Right);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER bool operator==(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, _In_z_ const _Elem* const _Right) {
+        return _Left._Equal(_Right);
+    }
+
+#if _HAS_CXX20
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER _Get_comparison_category_t<_Traits> operator<=>(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) noexcept {
+        return static_cast<_Get_comparison_category_t<_Traits>>(_Left.compare(_Right) <=> 0);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD _CONSTEXPR20_CONTAINER _Get_comparison_category_t<_Traits> operator<=>(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, _In_z_ const _Elem* const _Right) {
+        return static_cast<_Get_comparison_category_t<_Traits>>(_Left.compare(_Right) <=> 0);
+    }
+#else // ^^^ _HAS_CXX20 / !_HAS_CXX20 vvv
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator==(_In_z_ const _Elem* const _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        return _Right._Equal(_Left);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator!=(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) noexcept {
+        return !(_Left == _Right);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator!=(_In_z_ const _Elem* const _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        return !(_Left == _Right);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator!=(const basic_string<_Elem, _Traits, _Alloc>& _Left, _In_z_ const _Elem* const _Right) {
+        return !(_Left == _Right);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator<(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) noexcept {
+        return _Left.compare(_Right) < 0;
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator<(_In_z_ const _Elem* const _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        return _Right.compare(_Left) > 0;
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator<(const basic_string<_Elem, _Traits, _Alloc>& _Left, _In_z_ const _Elem* const _Right) {
+        return _Left.compare(_Right) < 0;
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator>(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) noexcept {
+        return _Right < _Left;
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator>(_In_z_ const _Elem* const _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        return _Right < _Left;
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator>(const basic_string<_Elem, _Traits, _Alloc>& _Left, _In_z_ const _Elem* const _Right) {
+        return _Right < _Left;
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator<=(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) noexcept {
+        return !(_Right < _Left);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator<=(_In_z_ const _Elem* const _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        return !(_Right < _Left);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator<=(const basic_string<_Elem, _Traits, _Alloc>& _Left, _In_z_ const _Elem* const _Right) {
+        return !(_Right < _Left);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator>=(
+        const basic_string<_Elem, _Traits, _Alloc>& _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) noexcept {
+        return !(_Left < _Right);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator>=(_In_z_ const _Elem* const _Left, const basic_string<_Elem, _Traits, _Alloc>& _Right) {
+        return !(_Left < _Right);
+    }
+
+    template <class _Elem, class _Traits, class _Alloc>
+    _NODISCARD bool operator>=(const basic_string<_Elem, _Traits, _Alloc>& _Left, _In_z_ const _Elem* const _Right) {
+        return !(_Left < _Right);
+    }
+#endif // ^^^ !_HAS_CXX20 ^^^
+
+    using string = basic_string<char, char_traits<char>, allocator<char>>;
 }

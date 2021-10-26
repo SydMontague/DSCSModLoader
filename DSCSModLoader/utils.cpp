@@ -25,6 +25,15 @@ void redirectJump(const void* target, const uint64_t offset) {
 	patchBytes(injectionData, offset);
 }
 
+void redirectCall(const void* target, const uint64_t offset) {
+	const std::vector<uint8_t> injectionData = {
+		(uint8_t)0x48, (uint8_t)0xB8, ptr2bytes(target),	// MOV RAX,target
+		(uint8_t)0xFF, (uint8_t)0xD0,						// CALL RAX
+	};
+
+	patchBytes(injectionData, offset);
+}
+
 const HexToStringResult parseByteArray(const std::string& str, std::vector<uint8_t>& vector) {
 	std::stringstream sstream(str);
 	std::vector<uint8_t> local;

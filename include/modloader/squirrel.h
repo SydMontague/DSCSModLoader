@@ -1,6 +1,7 @@
 #pragma once
 #include <squirrel/squirrel.h>
 #include <tuple>
+#include <stdint.h>
 
 /* Special thanks to Pherakki for providing most of this implementation. */
 
@@ -22,6 +23,33 @@ template<>
 int32_t pullParamValue<SQInteger&>(HSQUIRRELVM vm, SQInteger& slot, size_t index)
 {
     sq_getinteger(vm, index, &slot);
+    return 1;
+}
+
+template<>
+int32_t pullParamValue<int32_t&>(HSQUIRRELVM vm, int32_t& slot, size_t index)
+{
+    SQInteger val;
+    sq_getinteger(vm, index, &val);
+    slot = (int32_t) val;
+    return 1;
+}
+
+template<>
+int32_t pullParamValue<uint32_t&>(HSQUIRRELVM vm, uint32_t& slot, size_t index)
+{
+    SQInteger val;
+    sq_getinteger(vm, index, &val);
+    slot = (uint32_t) val;
+    return 1;
+}
+
+template<>
+int32_t pullParamValue<uint64_t&>(HSQUIRRELVM vm, uint64_t& slot, size_t index)
+{
+    SQInteger val;
+    sq_getinteger(vm, index, &val);
+    slot = val;
     return 1;
 }
 
@@ -68,6 +96,21 @@ void pushReturnValue(HSQUIRRELVM vm, RetType& value)
 }
 
 template<>
+void pushReturnValue<uint64_t>(HSQUIRRELVM vm, uint64_t& value) {
+    sq_pushinteger(vm, value);
+}
+
+template<>
+void pushReturnValue<int32_t>(HSQUIRRELVM vm, int32_t& value) {
+    sq_pushinteger(vm, value);
+}
+
+template<>
+void pushReturnValue<uint32_t>(HSQUIRRELVM vm, uint32_t& value) {
+    sq_pushinteger(vm, value);
+}
+
+template<>
 void pushReturnValue<SQInteger>(HSQUIRRELVM vm, SQInteger& value) {
     sq_pushinteger(vm, value);
 }
@@ -78,7 +121,7 @@ void pushReturnValue<SQFloat>(HSQUIRRELVM vm, SQFloat& value) {
 }
 
 template<>
-void pushReturnValue<SQBool>(HSQUIRRELVM vm, SQBool& value) {
+void pushReturnValue<bool>(HSQUIRRELVM vm, bool& value) {
     sq_pushbool(vm, value);
 }
 
