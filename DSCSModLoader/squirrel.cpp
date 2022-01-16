@@ -109,7 +109,7 @@ constexpr auto OFF_sq_setdelegate = 0x607E00;
 constexpr auto OFF_sq_getdelegate = 0x606500;
 constexpr auto OFF_sq_clone = 0x000000; // TODO find/implement
 constexpr auto OFF_sq_setfreevariable = 0x000000; // TODO find/implement
-constexpr auto OFF_sq_next = 0x000000; // TODO find/implement
+// constexpr auto OFF_sq_next = 0x000000; // self-implemented
 constexpr auto OFF_sq_getweakrefval = 0x606C20;
 constexpr auto OFF_sq_clear = 0x605E20;
 
@@ -572,7 +572,19 @@ SQRESULT sq_setfreevariable(HSQUIRRELVM v, SQInteger idx, SQUnsignedInteger nval
 	return ((PTR_sq_setfreevariable)((char*)GetModuleHandle(NULL) + OFF_sq_setfreevariable))(v, idx, nval);
 }
 SQRESULT sq_next(HSQUIRRELVM v, SQInteger idx) {
-	return ((PTR_sq_next)((char*)GetModuleHandle(NULL) + OFF_sq_next))(v, idx);
+	SQObjectPtr o = stack_get(v, idx), & refpos = stack_get(v, -1), realkey, val;
+	if (type(o) == OT_GENERATOR) {
+		return sq_throwerror(v, _SC("cannot iterate a generator"));
+	}
+	int faketojump;
+	if (!v->FOREACH_OP(o, realkey, val, refpos, 0, 666, faketojump))
+		return SQ_ERROR;
+	if (faketojump != 666) {
+		v->Push(realkey);
+		v->Push(val);
+		return SQ_OK;
+	}
+	return SQ_ERROR;
 }
 SQRESULT sq_getweakrefval(HSQUIRRELVM v, SQInteger idx) {
 	return ((PTR_sq_getweakrefval)((char*)GetModuleHandle(NULL) + OFF_sq_getweakrefval))(v, idx);
@@ -678,4 +690,21 @@ SQRESULT sq_stackinfos(HSQUIRRELVM v, SQInteger level, SQStackInfos* si) {
 }
 void sq_setdebughook(HSQUIRRELVM v) {
 	return ((PTR_sq_setdebughook)((char*)GetModuleHandle(NULL) + OFF_sq_setdebughook))(v);
+}
+
+// ********************************************* //
+// ****** Custom Implementation Helper ********* //
+// ********************************************* //
+constexpr auto OFF_SQVM_FOREACH_OP = 0x614E80;
+
+using PTR_SQVM_FOREACH_OP = bool(*)(SQVM* v, SQObjectPtr& o1, SQObjectPtr& o2, SQObjectPtr
+	& o3, SQObjectPtr& o4, SQInteger arg_2, int exitpos, int& jump);
+
+void SQVM::Push(const SQObjectPtr& o) { _stack[_top++] = o; }
+SQObjectPtr& SQVM::GetUp(SQInteger n) { return _stack[_top + n]; }
+SQObjectPtr& SQVM::GetAt(SQInteger n) { return _stack[n]; }
+
+bool SQVM::FOREACH_OP(SQObjectPtr& o1, SQObjectPtr& o2, SQObjectPtr
+	& o3, SQObjectPtr& o4, SQInteger arg_2, int exitpos, int& jump) {
+	return ((PTR_SQVM_FOREACH_OP)((char*)GetModuleHandle(NULL) + OFF_SQVM_FOREACH_OP))(this, o1, o2, o3, o4, arg_2, exitpos, jump);
 }

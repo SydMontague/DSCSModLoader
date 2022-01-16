@@ -71,7 +71,7 @@ class DSCSModLoaderImpl : public DSCSModLoader {
 private:
 	std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
 	std::vector<BasePlugin*> plugins;
-	
+
 	DSCSModLoaderImpl() {};
 
 	void loadPlugin(std::filesystem::path);
@@ -87,7 +87,7 @@ public:
 	void addSquirrelFunction(const std::string& table, const std::string& name, void** functionPtr, SQFUNCTION closure);
 	void addSquirrelFunction(const std::string& table, const std::string& name, SquirrelFunction data);
 
-// static functions to be used as function pointers
+	// static functions to be used as function pointers
 private:
 	static void _squirrelInit(HSQUIRRELVM vm);
 	static void _archiveListInit();
@@ -110,7 +110,7 @@ void DSCSModLoaderImpl::_archiveListInit() {
 void DSCSModLoaderImpl::archiveListInit() {
 	BOOST_LOG_TRIVIAL(info) << "initializing archive list...";
 
-	uint64_t* archiveCount = (uint64_t*) (getBaseOffset() + 0xF20770);
+	uint64_t* archiveCount = (uint64_t*)(getBaseOffset() + 0xF20770);
 	char* archiveList = (char*)(getBaseOffset() + 0xF219C0);
 	char** archiveTable = (char**)(getBaseOffset() + 0xF229C0);
 	bool* archiveIsInit = (bool*)(getBaseOffset() + 0xF20656);
@@ -125,12 +125,12 @@ void DSCSModLoaderImpl::archiveListInit() {
 	GetControllerTypeFunc getControllerType = (GetControllerTypeFunc)(getBaseOffset() + 0x57BFF0);
 
 	auto controllerType = getControllerType();
-	
+
 	addArchive("DSDBmod");
 	addArchive("DSDBP");
-	if(controllerType == 1)
+	if (controllerType == 1)
 		addArchive("DSDBSP");
-	addArchive("DSDBA");
+	addArchive("DSDBS");
 	addArchive("DSDBA");
 	addArchive("DSDB");
 
@@ -264,7 +264,7 @@ void DSCSModLoaderImpl::loadPlugin(const std::filesystem::path path) {
 		return;
 	}
 
-	const GetPluginFunction getPluginFunc = (GetPluginFunction) GetProcAddress(plugin, "getPlugin");
+	const GetPluginFunction getPluginFunc = (GetPluginFunction)GetProcAddress(plugin, "getPlugin");
 
 	if (getPluginFunc == nullptr) {
 		FreeLibrary(plugin);
@@ -289,7 +289,8 @@ void DSCSModLoaderImpl::init() {
 	// TODO make optional via config
 	AllocConsole();
 	freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-	freopen_s((FILE**)stderr, "CONERR$", "w", stderr);
+	freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+	freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
 
 	auto* data = new dscs::DigisterData();
 	//data->map.insert(std::make_pair("useDataBase", "1"));
@@ -339,7 +340,7 @@ bool DSCSModLoaderImpl::bootstrap() {
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
 	// redirect SteamAPI_Init call to custom initialization function
 	if (fdwReason == DLL_PROCESS_ATTACH) {
-		SteamAPI_Init = *((PTR_SteamAPI_Init*) (getBaseOffset() + 0x8C09D0));
+		SteamAPI_Init = *((PTR_SteamAPI_Init*)(getBaseOffset() + 0x8C09D0));
 		const void* ptr = DSCSModLoaderImpl::bootstrap;
 		std::vector<uint8_t> data = { ptr2bytes(ptr) };
 		patchBytes(data, 0x8C09D0);
