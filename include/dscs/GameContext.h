@@ -1,17 +1,21 @@
 #pragma once
 #include <stdint.h>
+
 #include <map>
 #include <vector>
 
 typedef uint8_t undefined;
 
-namespace dscs {
-    enum class StoryModeEnum {
-        CYBER_SLEUTH = 0,
+namespace dscs
+{
+    enum class StoryModeEnum
+    {
+        CYBER_SLEUTH   = 0,
         HACKERS_MEMORY = 1
     };
 
-    struct PartyEntry {
+    struct PartyEntry
+    {
         bool isFilled;
         undefined field_0x1;
         undefined field_0x2;
@@ -28,7 +32,7 @@ namespace dscs {
         undefined field_0xd;
         undefined field_0xe;
         undefined field_0xf;
-        struct Digimon* digimonPtr; 
+        struct Digimon* digimonPtr;
         undefined field_0x18;
         undefined field_0x19;
         undefined field_0x1a;
@@ -39,7 +43,8 @@ namespace dscs {
         undefined field_0x1f;
     };
 
-    struct InventoryItem {
+    struct InventoryItem
+    {
         bool isFilled;
         char pad[3];
         int32_t slotIndex;
@@ -49,7 +54,8 @@ namespace dscs {
         uint32_t quantity;
     };
 
-    struct LearnedSkill {
+    struct LearnedSkill
+    {
         bool isEnabled;
         char field_0x1;
         uint16_t field_0x2;
@@ -62,17 +68,19 @@ namespace dscs {
         uint32_t field_0x1c;
     };
 
-    struct DigimonMove {
+    struct DigimonMove
+    {
         uint32_t type;
         uint32_t move;
     };
 
-    struct Digimon {
+    struct Digimon
+    {
         undefined field_0x0;
         undefined field_0x1;
         undefined field_0x2;
         undefined field_0x3;
-        uint32_t digimonId; 
+        uint32_t digimonId;
         undefined field_0x8;
         undefined field_0x9;
         undefined field_0xa;
@@ -85,7 +93,7 @@ namespace dscs {
         undefined field_0x11;
         undefined field_0x12;
         undefined field_0x13;
-        char name[72]; 
+        char name[72];
         int16_t memoryCost;
         undefined field_0x5e;
         undefined field_0x5f;
@@ -114,8 +122,8 @@ namespace dscs {
         undefined field_0x86;
         undefined field_0x87;
         uint32_t currentSP;
-        uint32_t baseSP; 
-        uint16_t trainedSP; 
+        uint32_t baseSP;
+        uint16_t trainedSP;
         uint16_t baseOff;
         uint16_t trainedATK;
         uint16_t baseDef;
@@ -505,12 +513,14 @@ namespace dscs {
         undefined field_0x24f;
     };
 
-    struct ScanData {
+    struct ScanData
+    {
         uint16_t digimonId;
         uint16_t scanrate;
     };
 
-    struct DigimonContext {
+    struct DigimonContext
+    {
         void** functions;
         std::map<int64_t, ScanData*> scanData;
         int32_t bankSize;
@@ -580,17 +590,19 @@ namespace dscs {
         undefined field_0x117;
     };
 
-    struct Settings {
+    struct Settings
+    {
     private:
         void** functions;
+
     public:
-        float music; 
-        float effect; 
-        float voice; 
-        uint32_t minimap; 
-        uint32_t battleCutscenes; 
-        uint32_t showPartner; 
-        uint32_t voices; 
+        float music;
+        float effect;
+        float voice;
+        uint32_t minimap;
+        uint32_t battleCutscenes;
+        uint32_t showPartner;
+        uint32_t voices;
         uint32_t difficulty;
         uint32_t unk1;
         uint32_t customBGM[13];
@@ -628,39 +640,36 @@ namespace dscs {
         uint32_t backupUnk12;
     };
 
-    struct StoryMode {
+    struct StoryMode
+    {
         void** methods;
         enum StoryModeEnum mode;
         uint32_t field_0xc;
     };
 
-    struct Inventory {
+    struct Inventory
+    {
         void** methods;
         std::vector<InventoryItem*> bag;
         std::vector<InventoryItem*> field_0x20;
         std::vector<InventoryItem*> field_0x38;
     };
 
-    struct FlagArray {
+    struct FlagArray
+    {
         void** destroy;
         uint32_t flags[626];
 
-        bool get(int32_t flag) {
-            return (flags[flag >> 5] >> (flag & 0x1F) & 1) != 0;
-        }
+        bool get(int32_t flag) { return (flags[flag >> 5] >> (flag & 0x1F) & 1) != 0; }
 
-        void clear(int32_t flag) {
-            flags[flag >> 5] &= ~(1 << (flag & 0x1F));
-        }
+        void clear(int32_t flag) { flags[flag >> 5] &= ~(1 << (flag & 0x1F)); }
 
         // not equivalent to Flag.Set, since it doesn't call the achievement check
-        void set(int32_t flag) {
-            flags[flag >> 5] |= (1 << (flag & 0x1F));
-        }
+        void set(int32_t flag) { flags[flag >> 5] |= (1 << (flag & 0x1F)); }
     };
 
-
-    struct GameContext {
+    struct GameContext
+    {
         undefined** methods;
         FlagArray* flags;
         DigimonContext* digimonCS;
@@ -687,4 +696,4 @@ namespace dscs {
         struct GameContext_0xB8* unk0xb8;
         uint64_t** unk0xc0;
     };
-}
+} // namespace dscs

@@ -1,9 +1,10 @@
 #pragma once
-#include "dscs/GameContext.h"
 #include "dscs/DigisterMap.h"
+#include "dscs/GameContext.h"
 
-namespace dscs {
-	extern __declspec(dllexport) GameContext* getGameContext();
+namespace dscs
+{
+    extern __declspec(dllexport) GameContext* getGameContext();
 
-	extern __declspec(dllexport) DigisterMap* getDigisterMap();
-}
+    extern __declspec(dllexport) DigisterMap* getDigisterMap();
+} // namespace dscs

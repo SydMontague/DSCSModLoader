@@ -1,56 +1,63 @@
 #include "ScriptExtension.h"
+
 #include "dscs/GameInterface.h"
 
-namespace dscs {
-	namespace digimon {
-		int64_t GetScan(int64_t digimonId) {
-			auto context = getGameContext();
-			
-			auto& digimonContext = context->storyMode->mode == StoryModeEnum::HACKERS_MEMORY ? context->digimonHM : context->digimonCS;
-			auto& scanData = digimonContext->scanData;
-			auto found = scanData.find(digimonId);
+namespace dscs
+{
+    namespace digimon
+    {
+        int64_t GetScan(int64_t digimonId)
+        {
+            auto context = getGameContext();
 
-			return found == scanData.end() ? 0 : found->second->scanrate;
-		}
+            auto& digimonContext =
+                context->storyMode->mode == StoryModeEnum::HACKERS_MEMORY ? context->digimonHM : context->digimonCS;
+            auto& scanData = digimonContext->scanData;
+            auto found     = scanData.find(digimonId);
 
-		void AddScan(int64_t digimonId, int64_t scan) {
-			auto context = getGameContext();
+            return found == scanData.end() ? 0 : found->second->scanrate;
+        }
 
-			auto& digimonContext = context->storyMode->mode == StoryModeEnum::HACKERS_MEMORY ? context->digimonHM : context->digimonCS;
-			auto& scanData = digimonContext->scanData;
-			auto found = scanData.find(digimonId);
+        void AddScan(int64_t digimonId, int64_t scan)
+        {
+            auto context = getGameContext();
 
-			if (found == scanData.end())
-				return;
+            auto& digimonContext =
+                context->storyMode->mode == StoryModeEnum::HACKERS_MEMORY ? context->digimonHM : context->digimonCS;
+            auto& scanData = digimonContext->scanData;
+            auto found     = scanData.find(digimonId);
 
-			int64_t newScan = found->second->scanrate + scan;
+            if (found == scanData.end()) return;
 
-			if (newScan > 200)
-				newScan = 200;
-			else if (newScan < 0)
-				newScan = 0;
+            int64_t newScan = found->second->scanrate + scan;
 
-			found->second->scanrate = (uint16_t) newScan;
-		}
+            if (newScan > 200)
+                newScan = 200;
+            else if (newScan < 0)
+                newScan = 0;
 
-		void SetScan(int64_t digimonId, int64_t scan) {
-			auto context = getGameContext();
+            found->second->scanrate = (uint16_t)newScan;
+        }
 
-			auto& digimonContext = context->storyMode->mode == StoryModeEnum::HACKERS_MEMORY ? context->digimonHM : context->digimonCS;
-			auto& scanData = digimonContext->scanData;
-			auto found = scanData.find(digimonId);
+        void SetScan(int64_t digimonId, int64_t scan)
+        {
+            auto context = getGameContext();
 
-			if (found == scanData.end())
-				return;
+            auto& digimonContext =
+                context->storyMode->mode == StoryModeEnum::HACKERS_MEMORY ? context->digimonHM : context->digimonCS;
+            auto& scanData = digimonContext->scanData;
+            auto found     = scanData.find(digimonId);
 
-			uint64_t newScan = scan;
+            if (found == scanData.end()) return;
 
-			if (newScan > 200)
-				newScan = 200;
-			else if (newScan < 0)
-				newScan = 0;
+            uint64_t newScan = scan;
 
-			found->second->scanrate = (uint16_t) newScan;
-		}
-	}
-}
+            if (newScan > 200)
+                newScan = 200;
+            else if (newScan < 0)
+                newScan = 0;
+
+            found->second->scanrate = (uint16_t)newScan;
+        }
+    } // namespace digimon
+} // namespace dscs
