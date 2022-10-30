@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
-#include "dscs/lib/map.h"
-#include "dscs/lib/vector.h"
+#include <map>
+#include <vector>
 
 typedef uint8_t undefined;
 
@@ -512,16 +512,16 @@ namespace dscs {
 
     struct DigimonContext {
         void** functions;
-        map<int64_t, ScanData*> scanData;
+        std::map<int64_t, ScanData*> scanData;
         int32_t bankSize;
         undefined field_0x1c;
         undefined field_0x1d;
         undefined field_0x1e;
         undefined field_0x1f;
-        vector<PartyEntry*> bank;
-        vector<PartyEntry*> farm[5];
-        vector<PartyEntry*> party;
-        vector<uint64_t> unkVector;
+        std::vector<PartyEntry*> bank;
+        std::vector<PartyEntry*> farm[5];
+        std::vector<PartyEntry*> party;
+        std::vector<uint64_t> unkVector;
         undefined field_0xe0;
         undefined field_0xe1;
         undefined field_0xe2;
@@ -636,9 +636,9 @@ namespace dscs {
 
     struct Inventory {
         void** methods;
-        vector<InventoryItem*> bag;
-        vector<InventoryItem*> field_0x20;
-        vector<InventoryItem*> field_0x38;
+        std::vector<InventoryItem*> bag;
+        std::vector<InventoryItem*> field_0x20;
+        std::vector<InventoryItem*> field_0x38;
     };
 
     struct FlagArray {

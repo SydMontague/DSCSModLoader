@@ -1,7 +1,5 @@
-﻿// DSCSModLoader.cpp: Definiert den Einstiegspunkt für die Anwendung.
-//
+﻿#include <Windows.h>
 
-#include <Windows.h>
 #include "DSCSModLoader.h"
 #include "modloader/utils.h"
 #include "modloader/plugin.h"
@@ -15,6 +13,9 @@
 #include <filesystem>
 
 #include <cstdarg>
+
+// force Windows 7 WINAPI, so Boost::log works. Seems like a Boost bug
+#define BOOST_USE_WINAPI_VERSION 0x0601
 
 #include <boost/log/core.hpp>
 #include <boost/log/trivial.hpp>

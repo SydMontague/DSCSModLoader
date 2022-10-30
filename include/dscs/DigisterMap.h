@@ -1,18 +1,18 @@
 #pragma once
 #include <stdint.h>
-#include <dscs/lib/map.h>
-#include <dscs/lib/string.h>
+#include <map>
+#include <string>
 
 namespace dscs {
 
 	struct DigisterData {
 		uint8_t unknown[0x38];
-		map<string, string> map;
+        std::map<std::string, std::string> map;
 	};
 
 	struct DigisterMap {
 		void* functions;
-		map<string, DigisterData*> map;
+        std::map<std::string, DigisterData*> map;
 	};
 
 }
