@@ -531,7 +531,7 @@ namespace dscs
         std::vector<PartyEntry*> bank;
         std::vector<PartyEntry*> farm[5];
         std::vector<PartyEntry*> party;
-        std::vector<uint64_t> unkVector;
+        std::vector<PartyEntry*> guests; // limited to size 2
         undefined field_0xe0;
         undefined field_0xe1;
         undefined field_0xe2;
