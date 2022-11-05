@@ -1,10 +1,10 @@
 #include <Windows.h>
 #define SQUIRREL_API extern __declspec(dllexport)
 #include <assert.h>
+#include <squirrel/squirrel.h>
 #include <squirrel/impl/sqstate.h>
 #include <squirrel/impl/sqstring.h>
 #include <squirrel/impl/sqvm.h>
-#include <squirrel/squirrel.h>
 
 #include <new>
 
