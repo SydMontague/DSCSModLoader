@@ -1,0 +1,23 @@
+name: "Build DSCSModLoader.dll"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: windows
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+        toolset: 14.34
+        vsversion: 2022
+    - name: Build
+      run: |
+        cmake . -DCMAKE_BUILD_TYPE=Release
+        cmake --build --config Release
