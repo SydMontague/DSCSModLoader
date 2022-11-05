@@ -11,7 +11,7 @@ jobs:
     steps:
 
     - name: Cache
-      use: actions/cache@v3
+      uses: actions/cache@v3
       with:
         path: ${{ github.workspace }}/_deps/
         key: CPM Dependencies
