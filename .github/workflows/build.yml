@@ -15,7 +15,6 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1
       with:
         arch: x64
-        toolset: 14.34
         vsversion: 2022
     - name: Build
       run: |
