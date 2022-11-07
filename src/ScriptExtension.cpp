@@ -12,7 +12,7 @@ namespace dscs
 
             auto& digimonContext =
                 context->storyMode->mode == StoryModeEnum::HACKERS_MEMORY ? context->digimonHM : context->digimonCS;
-            auto& scanData = digimonContext.scanData;
+            auto& scanData = digimonContext->scanData;
             auto found     = scanData.find(digimonId);
 
             return found == scanData.end() ? 0 : found->second.scanrate;
@@ -24,7 +24,7 @@ namespace dscs
 
             auto& digimonContext =
                 context->storyMode->mode == StoryModeEnum::HACKERS_MEMORY ? context->digimonHM : context->digimonCS;
-            auto& scanData = digimonContext.scanData;
+            auto& scanData = digimonContext->scanData;
             auto found     = scanData.find(digimonId);
 
             if (found == scanData.end()) return;
