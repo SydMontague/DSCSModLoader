@@ -1,11 +1,11 @@
 #pragma once
-#include "GameContext.h"
 
 #include <stdint.h>
 
 #include <map>
 #include <vector>
-typedef int8_t undefined;
+
+typedef uint8_t undefined;
 
 namespace dscs
 {

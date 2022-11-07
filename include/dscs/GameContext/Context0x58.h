@@ -1,11 +1,10 @@
 #pragma once
 #include <stdint.h>
 
-typedef int8_t undefined;
+typedef uint8_t undefined;
 
 namespace dscs
 {
-
     struct Context0x58_sub1_sub
     {
         uint8_t field0_0x0;
