@@ -5,9 +5,9 @@
 
 namespace dscs
 {
-    std::map<int32_t, SeenData>* getSeenData()
+    std::map<int32_t, SeenData*>* getSeenData()
     {
-        using Func   = std::map<int32_t, SeenData>* (*)();
+        using Func   = std::map<int32_t, SeenData*>* (*)();
         const Func f = (Func)(getBaseOffset() + 0x1A4740);
         return f();
     }

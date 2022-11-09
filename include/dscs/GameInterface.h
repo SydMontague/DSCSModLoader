@@ -5,7 +5,7 @@
 
 namespace dscs
 {
-    extern __declspec(dllexport) std::map<int32_t, SeenData>* getSeenData();
+    extern __declspec(dllexport) std::map<int32_t, SeenData*>* getSeenData();
 
     extern __declspec(dllexport) GameContext* getGameContext();
 

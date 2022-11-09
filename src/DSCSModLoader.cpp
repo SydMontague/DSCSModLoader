@@ -70,12 +70,12 @@ void TestSave(HSQUIRRELVM vm) {
 }
 
 void Test(HSQUIRRELVM vm) {
-    std::map<int32_t, dscs::SeenData>* data = dscs::getSeenData();
+    std::map<int32_t, dscs::SeenData*>* data = dscs::getSeenData();
 
     for(auto& seenData : *data)
-        std::cout << seenData.second.entryId << " " << seenData.second.seenState << " " << seenData.second.field2_0x6 << std::endl;
+        std::cout << seenData.second->entryId << " " << seenData.second->seenState << " " << seenData.second->field2_0x6 << std::endl;
 
-    data->at(9).seenState = 0;
+    data->at(9)->seenState = 0;
 }
 
 void DebugLog(HSQUIRRELVM vm, const SQChar* msg) { sq_getprintfunc(vm)(vm, msg); }
