@@ -58,15 +58,23 @@ void initializeLogging()
 }
 
 void TestSave(HSQUIRRELVM vm) {
+    std::ofstream output("testsave.bin");
+
     dscs::Savegame save;
     dscs::GameContext* context = dscs::getGameContext();
+    std::map<int32_t, dscs::SeenData*>* seenData = dscs::getSeenData();
 
     save.version = 0x13;
     std::copy(std::begin(context->flags->flags), std::end(context->flags->flags), std::begin(save.flags));
+    uint32_t count = 0;
+    for(auto it = seenData->begin(); count < 400 && it != seenData->end(); count++, it++)
+        save.seenData[count] = *it->second;
     std::copy(std::begin(context->work->flags), std::end(context->work->flags), std::begin(save.work));
     save.settings = context->settings->data;
     save.stats = context->stats->data;
-    //save.context_0x58_2 = context->unk0x58->
+    
+    
+    output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
 
 void Test(HSQUIRRELVM vm) {
