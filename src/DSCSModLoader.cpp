@@ -4,6 +4,7 @@
 #include "dscs/GameInterface.h"
 #include "modloader/plugin.h"
 #include "modloader/utils.h"
+#include "dscs/Savegame.h"
 
 #include <Windows.h>
 
@@ -53,6 +54,24 @@ void initializeLogging()
                              boost::log::keywords::auto_flush = true);
     // TODO load from config
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
+}
+
+void TestSave(HSQUIRRELVM vm) {
+    dscs::Savegame save;
+    dscs::GameContext* context = dscs::getGameContext();
+
+    save.version = 0x13;
+    save.flags = context->flags->flags;
+    save.work = context->work->flags;
+    save.settings = context->settings->data;
+    save.stats = context->stats->data;
+    //save.context_0x58_2 = context->unk0x58->
+}
+
+void Test(HSQUIRRELVM vm) {
+    std::map<int32_t, dscs::SeenData>* data = dscs::getSeenData();
+    for(auto& seenData : data)
+        std::cout << seenData.entryId << " " << seenData.seenState << std::endl;
 }
 
 void DebugLog(HSQUIRRELVM vm, const SQChar* msg) { sq_getprintfunc(vm)(vm, msg); }
@@ -331,6 +350,10 @@ void DSCSModLoaderImpl::init()
 
     // script extensions start
     addSquirrelFunction("Debug", "Log", SQUIRREL_AWAY(DebugLog));
+
+    addSquirrelFunction("Debug", "TestSave", SQUIRREL_AWAY(TestSave));
+    addSquirrelFunction("Debug", "Test", SQUIRREL_AWAY(Test));
+
     addSquirrelFunction("Digimon", "GetScan", SQUIRREL_AWAY(dscs::digimon::GetScan));
     addSquirrelFunction("Digimon", "AddScan", SQUIRREL_AWAY(dscs::digimon::AddScan));
     addSquirrelFunction("Digimon", "SetScan", SQUIRREL_AWAY(dscs::digimon::SetScan));

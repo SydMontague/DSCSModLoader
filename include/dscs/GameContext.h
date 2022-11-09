@@ -18,6 +18,13 @@ typedef uint8_t undefined;
 
 namespace dscs
 {
+    struct SeenData
+    {
+        uint entryId;
+        uint16_t seenState;
+        uint16_t field2_0x6;
+    };
+
     enum class StoryModeEnum
     {
         CYBER_SLEUTH   = 0,

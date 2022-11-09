@@ -1,9 +1,14 @@
 #include "dscs/GameInterface.h"
+#include "dscs/Savegame.h"
 
 #include "modloader/utils.h"
 
 namespace dscs
 {
+    std::map<uint32_t, SeenData>* getSeenData() {
+        return reinterpret_cast<std::map<int32_t, SeenData>*>(getBaseOffset() + 0xF20850);
+    }
+
     GameContext* getGameContext()
     {
         using Func   = dscs::GameContext* (*)();

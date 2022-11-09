@@ -28,13 +28,6 @@ namespace dscs
         SaveGame_0x58_sub field5_0x2c[11];
     };
 
-    struct SeenData
-    {
-        uint entryId;
-        uint16_t seenState;
-        uint16_t field2_0x6;
-    };
-
     struct FarmSaveEntry
     {
         bool isFilled;
