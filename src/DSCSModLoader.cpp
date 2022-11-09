@@ -71,7 +71,8 @@ void TestSave(HSQUIRRELVM vm) {
 
 void Test(HSQUIRRELVM vm) {
     std::map<int32_t, dscs::SeenData>* data = dscs::getSeenData();
-    for(auto& seenData : data)
+
+    for(auto& seenData : *data)
         std::cout << seenData.entryId << " " << seenData.seenState << std::endl;
 }
 
