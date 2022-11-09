@@ -14,6 +14,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <algorithm>
 
 // force Windows 7 WINAPI, so Boost::log works. Seems like a Boost bug
 #define BOOST_USE_WINAPI_VERSION 0x0601
