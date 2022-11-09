@@ -20,7 +20,7 @@ namespace dscs
 {
     struct SeenData
     {
-        uint entryId;
+        uint32_t entryId;
         uint16_t seenState;
         uint16_t field2_0x6;
     };

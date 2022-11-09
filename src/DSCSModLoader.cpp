@@ -61,8 +61,8 @@ void TestSave(HSQUIRRELVM vm) {
     dscs::GameContext* context = dscs::getGameContext();
 
     save.version = 0x13;
-    save.flags = context->flags->flags;
-    save.work = context->work->flags;
+    std::copy(std::begin(context->flags->flags), std::end(context->flags->flags), std::begin(save.flags));
+    std::copy(std::begin(context->work->flags), std::end(context->work->flags), std::begin(save.work));
     save.settings = context->settings->data;
     save.stats = context->stats->data;
     //save.context_0x58_2 = context->unk0x58->
