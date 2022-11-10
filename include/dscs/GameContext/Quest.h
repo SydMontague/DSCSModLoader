@@ -49,9 +49,9 @@ namespace dscs
     struct QuestsStruct
     {
         void** destroy;
-        std::map<int, quest_para_sub1> unk1;
-        std::map<int, quest_para_sub2> unk2;
-        std::map<int, quest_para_sub2> unk3;
+        std::map<int, quest_para_sub1*> unk1;
+        std::map<int, quest_para_sub2*> unk2;
+        std::map<int, quest_para_sub2*> unk3;
         quest_para_sub3 unk4;
         uint32_t game;
         int32_t field21_0x7c;

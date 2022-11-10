@@ -15,7 +15,7 @@ namespace dscs
             auto& scanData = digimonContext->scanData;
             auto found     = scanData.find(digimonId);
 
-            return found == scanData.end() ? 0 : found->second.scanrate;
+            return found == scanData.end() ? 0 : found->second->scanrate;
         }
 
         void AddScan(int64_t digimonId, int64_t scan)
@@ -29,14 +29,14 @@ namespace dscs
 
             if (found == scanData.end()) return;
 
-            int64_t newScan = found->second.scanrate + scan;
+            int64_t newScan = found->second->scanrate + scan;
 
             if (newScan > 200)
                 newScan = 200;
             else if (newScan < 0)
                 newScan = 0;
 
-            found->second.scanrate = (uint16_t)newScan;
+            found->second->scanrate = (uint16_t)newScan;
         }
 
         void SetScan(int64_t digimonId, int64_t scan)
@@ -57,7 +57,7 @@ namespace dscs
             else if (newScan < 0)
                 newScan = 0;
 
-            found->second.scanrate = (uint16_t)newScan;
+            found->second->scanrate = (uint16_t)newScan;
         }
     } // namespace digimon
 } // namespace dscs
