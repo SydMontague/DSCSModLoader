@@ -442,7 +442,7 @@ namespace dscs
     struct DigimonContext
     {
         void** functions;
-        std::map<int, ScanData> scanData;
+        std::map<int, ScanData*> scanData;
         int32_t bankSize;
         undefined pad1[4];
         std::vector<PartyEntry*> bank;

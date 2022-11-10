@@ -61,7 +61,7 @@ namespace dscs
             this->digimonPtr = *entry.digimonPtr;
             return *this;
         }
-        
+
         BankSaveEntry& operator=(const PartyEntry* entry)
         {
             this->isFilled = entry->isFilled;
@@ -90,7 +90,7 @@ namespace dscs
         FarmSaveEntry farm[5][10];
         BankSaveEntry party[11];
         BankSaveEntry guest[2];
-        uint32_t context_0x18[213];
+        GameContext0x18_data context_0x18;
         InventoryItem inventoryBag[2000];
         InventoryItem inventoryUnk1[100];
         InventoryItem inventoryUnk2[100];
@@ -101,7 +101,7 @@ namespace dscs
         quest_para_sub1 questUnk1[350];
         quest_para_sub2 questUnk2[350];
         quest_para_sub2 questUnk3[350];
-        int32_t questUnk4[16];
+        quest_para_sub3 questUnk4;
         DigilineEntry digiline1[30];
         DigilineEntry digiline2[30];
         DigilineEntry digiline3[30];

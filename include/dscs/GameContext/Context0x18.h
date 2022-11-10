@@ -188,13 +188,7 @@ namespace dscs
         Context0x18_sub2 field1_0x28;
     };
 
-    struct GameContext_0x18
-    {
-        void** destroy;
-        undefined field1_0x8;
-        undefined field2_0x9;
-        undefined field3_0xa;
-        undefined field4_0xb;
+    struct GameContext0x18_data {
         Context0x18_sub field5_0xc[5];
         undefined field6_0x354;
         undefined field7_0x355;
@@ -208,5 +202,15 @@ namespace dscs
         undefined field15_0x35d;
         undefined field16_0x35e;
         undefined field17_0x35f;
+    };
+
+    struct GameContext_0x18
+    {
+        void** destroy;
+        undefined field1_0x8;
+        undefined field2_0x9;
+        undefined field3_0xa;
+        undefined field4_0xb;
+        GameContext0x18_data data;
     };
 } // namespace dscs

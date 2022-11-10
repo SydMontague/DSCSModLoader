@@ -26,12 +26,8 @@ namespace dscs
         uint32_t field5_0x14;
     };
 
-    struct QuestsStruct
-    {
-        void** destroy;
-        std::map<int, quest_para_sub1> unk1;
-        std::map<int, quest_para_sub2> unk2;
-        std::map<int, quest_para_sub2> unk3;
+    struct quest_para_sub3 {
+
         int32_t field4_0x38;
         int32_t field5_0x3c;
         int32_t field6_0x40;
@@ -48,6 +44,15 @@ namespace dscs
         int32_t field17_0x6c;
         int32_t field18_0x70;
         int32_t field19_0x74;
+    };
+
+    struct QuestsStruct
+    {
+        void** destroy;
+        std::map<int, quest_para_sub1> unk1;
+        std::map<int, quest_para_sub2> unk2;
+        std::map<int, quest_para_sub2> unk3;
+        quest_para_sub3 unk4;
         uint32_t game;
         int32_t field21_0x7c;
     };
