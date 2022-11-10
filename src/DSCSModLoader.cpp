@@ -61,6 +61,8 @@ void TestSave(HSQUIRRELVM vm) {
     std::ofstream output("testsave.bin", std::ios::binary);
 
     dscs::Savegame save;
+    dscs::StorySave& hmSave = save.saveHM;
+    dscs::StorySave& csSave = save.saveCS;
     dscs::GameContext* context = dscs::getGameContext();
     std::map<int32_t, dscs::SeenData*>* seenData = dscs::getSeenData();
 
@@ -74,7 +76,7 @@ void TestSave(HSQUIRRELVM vm) {
     save.stats = context->stats->data;
     save.battleBoxData = context->battleBox->data;
 
-    for(int32_t i = 0u; i < 6; i++)
+    for(int32_t i = 0; i < 6; i++)
     {
         auto& saveBox = save.battleBoxes[i];
         auto& contextBox = context->battleBox->boxes[i];
@@ -83,15 +85,18 @@ void TestSave(HSQUIRRELVM vm) {
         std::copy(std::begin(contextBox.name), std::end(contextBox.name), saveBox.name);
 
         for(int32_t j = 0; j < 11; j++)
-        {
-            saveBox.party[j].isFilled = contextBox.party[j].isFilled;
-            saveBox.party[j].field4_0x4 = contextBox.party[j].field4_0x4;
-            saveBox.party[j].field5_0x8 = contextBox.party[j].field5_0x8;
-            saveBox.party[j].digimonPtr = *contextBox.party[j].digimonPtr;
-        }
+            saveBox.party[j] = contextBox.party[j];
     }
     
+    auto digimonCS = context->digimonCS;
+    auto scanDataCS = digimonCS->scanData;
+    for(auto it = scanDataCS->begin(); count < 400 && it != scanDataCS->end(); count++, it++)
+        csSave.scanData[count] = it->second;
     
+    for(auto it = digimonCS->bank.begin() count < 300 && it != digimonCS->bank.end(); count++, it++)
+        csSave.bank[count] = (*it);
+    csSave.bankSize = digimonCS->bankSize;
+
     output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
 
