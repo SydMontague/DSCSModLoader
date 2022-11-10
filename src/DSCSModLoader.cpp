@@ -113,9 +113,11 @@ void TestSave(HSQUIRRELVM vm) {
             csSave.farm[i][count] = (*it);
     }
 
+    count = 0;
     for(auto it = digimonCS->party.begin(); count < 11 && it != digimonCS->party.end(); count++, it++)
         csSave.party[count] = (*it);
 
+    count = 0;
     for(auto it = digimonCS->guestDigimon.begin(); count < 2 && it != digimonCS->guestDigimon.end(); count++, it++)
         csSave.guest[count] = (*it);
 
@@ -189,9 +191,11 @@ void TestSave(HSQUIRRELVM vm) {
             hmSave.farm[i][count] = (*it);
     }
 
+    count = 0;
     for(auto it = digimonHM->party.begin(); count < 11 && it != digimonHM->party.end(); count++, it++)
         hmSave.party[count] = (*it);
 
+    count = 0;
     for(auto it = digimonHM->guestDigimon.begin(); count < 2 && it != digimonHM->guestDigimon.end(); count++, it++)
         hmSave.guest[count] = (*it);
 
