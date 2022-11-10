@@ -86,7 +86,7 @@ void TestSave(HSQUIRRELVM vm) {
         {
             saveBox.party[i].isFilled = contextBox.party[i].isFilled;
             saveBox.party[i].field4_0x4 = contextBox.party[i].field4_0x4;
-            saveBox.party[i].field4_0x8 = contextBox.party[i].field4_0x8;
+            saveBox.party[i].field5_0x8 = contextBox.party[i].field5_0x8;
             saveBox.party[i].digimonPtr = *contextBox.party[i].digimonPtr;
         }
     }
