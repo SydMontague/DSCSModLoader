@@ -123,20 +123,20 @@ void TestSave(HSQUIRRELVM vm) {
 
     count = 0;
     for(auto it = inventoryCS->bag.begin(); count < 2000 && it != inventoryCS->bag.end(); count++, it++)
-        csSave.inventoryBag[count] = (*it);
+        csSave.inventoryBag[count] = *(*it);
 
     count = 0;
     for(auto it = inventoryCS->unk1.begin(); count < 100 && it != inventoryCS->unk1.end(); count++, it++)
-        csSave.inventoryUnk1[count] = (*it);
+        csSave.inventoryUnk1[count] = *(*it);
 
     count = 0;
     for(auto it = inventoryCS->unk2.begin(); count < 100 && it != inventoryCS->unk2.end(); count++, it++)
-        csSave.inventoryUnk2[count] = (*it);
+        csSave.inventoryUnk2[count] = *(*it);
 
     csSave.player = playerCS->data;
     count = 0;
     for(auto it = playerCS->learnedSkills.begin(); count < 30 && it != playerCS->learnedSkills.end(); count++, it++)
-        csSave.hackingSkills = (*it);
+        csSave.hackingSkills = *(*it);
     
     count = 0;
     for(auto it = questsCS->unk1.begin(); count < 350 && it != inventoryCS->unk1.end(); count++, it++)
@@ -151,18 +151,18 @@ void TestSave(HSQUIRRELVM vm) {
 
     count = 0;
     for(auto it = digilineCS->unk1.begin(); count < 30 && it != digilineCS->unk1.end(); count++, it++)
-        csSave.digiline1[count] = (*it);
+        csSave.digiline1[count] = *(*it);
     count = 0;
     for(auto it = digilineCS->unk2.begin(); count < 30 && it != digilineCS->unk2.end(); count++, it++)
-        csSave.digiline2[count] = (*it);
+        csSave.digiline2[count] = *(*it);
     count = 0;
     for(auto it = digilineCS->unk3.begin(); count < 30 && it != digilineCS->unk3.end(); count++, it++)
-        csSave.digiline3[count] = (*it);
+        csSave.digiline3[count] = *(*it);
     std::copy(digilineCS->field4_0x50.begin(), digilineCS->field4_0x50.end(), std::begin(csSave.digilineUnk);
     
     count = 0;
     for(auto it = digilineCS->field5_0x68.begin(); count < 90 && it != digilineCS->field5_0x68.end(); count++, it++)
-        csSave.digiline4[count] = (*it);
+        csSave.digiline4[count] = *(*it);
     
     // HM Save
     auto digimonHM = context->digimonHM;
@@ -199,20 +199,20 @@ void TestSave(HSQUIRRELVM vm) {
 
     count = 0;
     for(auto it = inventoryHM->bag.begin(); count < 2000 && it != inventoryHM->bag.end(); count++, it++)
-        HMSave.inventoryBag[count] = (*it);
+        HMSave.inventoryBag[count] = *(*it);
 
     count = 0;
     for(auto it = inventoryHM->unk1.begin(); count < 100 && it != inventoryHM->unk1.end(); count++, it++)
-        HMSave.inventoryUnk1[count] = (*it);
+        HMSave.inventoryUnk1[count] = *(*it);
 
     count = 0;
     for(auto it = inventoryHM->unk2.begin(); count < 100 && it != inventoryHM->unk2.end(); count++, it++)
-        HMSave.inventoryUnk2[count] = (*it);
+        HMSave.inventoryUnk2[count] = *(*it);
 
     HMSave.player = playerHM->data;
     count = 0;
     for(auto it = playerHM->learnedSkills.begin(); count < 30 && it != playerHM->learnedSkills.end(); count++, it++)
-        HMSave.hackingSkills = (*it);
+        HMSave.hackingSkills = *(*it);
     
     count = 0;
     for(auto it = questsHM->unk1.begin(); count < 350 && it != inventoryHM->unk1.end(); count++, it++)
@@ -227,18 +227,18 @@ void TestSave(HSQUIRRELVM vm) {
 
     count = 0;
     for(auto it = digilineHM->unk1.begin(); count < 30 && it != digilineHM->unk1.end(); count++, it++)
-        HMSave.digiline1[count] = (*it);
+        HMSave.digiline1[count] = *(*it);
     count = 0;
     for(auto it = digilineHM->unk2.begin(); count < 30 && it != digilineHM->unk2.end(); count++, it++)
-        HMSave.digiline2[count] = (*it);
+        HMSave.digiline2[count] = *(*it);
     count = 0;
     for(auto it = digilineHM->unk3.begin(); count < 30 && it != digilineHM->unk3.end(); count++, it++)
-        HMSave.digiline3[count] = (*it);
+        HMSave.digiline3[count] = *(*it);
     std::copy(digilineHM->field4_0x50.begin(), digilineHM->field4_0x50.end(), std::begin(HMSave.digilineUnk);
     
     count = 0;
     for(auto it = digilineHM->field5_0x68.begin(); count < 90 && it != digilineHM->field5_0x68.end(); count++, it++)
-        HMSave.digiline4[count] = (*it);
+        HMSave.digiline4[count] = *(*it);
 
     output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
