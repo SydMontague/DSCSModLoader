@@ -6,7 +6,7 @@
 #include "GameContext/Context0x18.h"
 #include "GameContext/Quest.h"
 #include "GameContext/Digiline.h"
-#include "GameContext/Context0x58.h"
+#include "GameContext/OnlineBattleBox.h"
 #include "GameContext/UserStats.h"
 
 #include <stdint.h>
@@ -79,7 +79,7 @@ namespace dscs
         DigilineStruct* digilineCS;
         Settings* settings;
         UserStats* stats;
-        GameContext_0x58* unk0x58;
+        OnlineBattleBox* battleBox;
         DigimonContext* digimonHM;
         GameContext_0x18* unk0x18_HM;
         Inventory* inventoryHM;

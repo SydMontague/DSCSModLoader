@@ -10,23 +10,6 @@ typedef uint8_t undefined;
 
 namespace dscs
 {
-    struct SaveGame_0x58_sub
-    {
-        uint32_t field0_0x0;
-        uint32_t field1_0x4;
-        uint32_t field2_0x8;
-        uint32_t field3_0xc[141];
-    };
-
-    struct SaveGame_0x58
-    {
-        uint8_t field0_0x0;
-        char field1_0x1[40];
-        undefined field2_0x29;
-        undefined field3_0x2a;
-        undefined field4_0x2b;
-        SaveGame_0x58_sub field5_0x2c[11];
-    };
 
     struct FarmSaveEntry
     {
@@ -49,6 +32,16 @@ namespace dscs
         uint32_t field4_0x4;
         uint32_t field5_0x8;
         Digimon digimonPtr;
+    };
+
+    struct SaveBattleBox
+    {
+        uint8_t field0_0x0;
+        char name[40];
+        undefined field2_0x29;
+        undefined field3_0x2a;
+        undefined field4_0x2b;
+        BankSaveEntry party[11];
     };
 
     struct StorySave
@@ -87,8 +80,8 @@ namespace dscs
         uint32_t work[100];
         SettingsData settings;
         UserStatsData stats;
-        uint32_t context_0x58_1[43];
-        SaveGame_0x58 context_0x58_2[6];
+        OnlineBattleBox_sub1 battleBoxData;
+        SaveBattleBox battleBoxes[6];
         StorySave saveCS;
         StorySave saveHM;
     };

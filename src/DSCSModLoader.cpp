@@ -72,6 +72,24 @@ void TestSave(HSQUIRRELVM vm) {
     std::copy(std::begin(context->work->flags), std::end(context->work->flags), std::begin(save.work));
     save.settings = context->settings->data;
     save.stats = context->stats->data;
+    save.battleBoxData = context->battleBox->data;
+
+    for(int32_t i = 0u; i < 6; i++)
+    {
+        auto& saveBox = save.battleBoxes[i];
+        auto& contextBox = context->battleBox->boxes[i];
+
+        saveBox.field0_0x0 = contextBox.field0_0x0;
+        std::copy(std::begin(contextBox.name), std::end(contextBox.name), saveBox.name);
+
+        for(int32_t j = 0; j < 11; j++)
+        {
+            saveBox.party[i].isFilled = contextBox.party[i].isFilled;
+            saveBox.party[i].field4_0x4 = contextBox.party[i].field4_0x4;
+            saveBox.party[i].field4_0x8 = contextBox.party[i].field4_0x8;
+            saveBox.party[i].digimonPtr = *contextBox.party[i].digimonPtr;
+        }
+    }
     
     
     output.write(reinterpret_cast<char*>(&save), sizeof(save));

@@ -1,40 +1,15 @@
 #pragma once
 #include <stdint.h>
+#include "DigimonContext.h"
 
 typedef uint8_t undefined;
 
 namespace dscs
 {
-    struct Context0x58_sub1_sub
+    struct OnlineBattleBoxEntry
     {
         uint8_t field0_0x0;
-        undefined field1_0x1;
-        undefined field2_0x2;
-        undefined field3_0x3;
-        uint64_t field4_0x4;
-        undefined field5_0xc;
-        undefined field6_0xd;
-        undefined field7_0xe;
-        undefined field8_0xf;
-        char* field9_0x10;
-    };
-
-    struct Context0x58_sub1
-    {
-        uint8_t field0_0x0;
-        char field1_0x1[28];
-        undefined field2_0x1d;
-        undefined field3_0x1e;
-        undefined field4_0x1f;
-        undefined field5_0x20;
-        undefined field6_0x21;
-        undefined field7_0x22;
-        undefined field8_0x23;
-        undefined field9_0x24;
-        undefined field10_0x25;
-        undefined field11_0x26;
-        undefined field12_0x27;
-        undefined field13_0x28;
+        char name[40];
         undefined field14_0x29;
         undefined field15_0x2a;
         undefined field16_0x2b;
@@ -42,12 +17,11 @@ namespace dscs
         undefined field18_0x2d;
         undefined field19_0x2e;
         undefined field20_0x2f;
-        Context0x58_sub1_sub field21_0x30[11];
+        PartyEntry party[11];
     };
 
-    struct GameContext_0x58
-    {
-        void** destroy;
+    struct OnlineBattleBox_sub1 {
+
         uint32_t field1_0x8;
         uint32_t field2_0xc;
         undefined field3_0x10;
@@ -66,11 +40,17 @@ namespace dscs
         uint32_t field16_0xa8;
         uint32_t field17_0xac;
         uint32_t field18_0xb0;
+    };
+
+    struct OnlineBattleBox
+    {
+        void** destroy;
+        OnlineBattleBox_sub1 data;
         undefined field19_0xb4;
         undefined field20_0xb5;
         undefined field21_0xb6;
         undefined field22_0xb7;
-        Context0x58_sub1 field23_0xb8[6];
+        OnlineBattleBoxEntry boxes[6];
         undefined field24_0x808;
         undefined field25_0x809;
         undefined field26_0x80a;
