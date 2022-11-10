@@ -136,16 +136,16 @@ void TestSave(HSQUIRRELVM vm) {
     csSave.player = playerCS->data;
     count = 0;
     for(auto it = playerCS->learnedSkills.begin(); count < 30 && it != playerCS->learnedSkills.end(); count++, it++)
-        csSave.hackingSkills = *(*it);
+        csSave.hackingSkills[count] = *(*it);
     
     count = 0;
-    for(auto it = questsCS->unk1.begin(); count < 350 && it != inventoryCS->unk1.end(); count++, it++)
+    for(auto it = questsCS->unk1.begin(); count < 350 && it != questsCS->unk1.end(); count++, it++)
         csSave.questUnk1[count] = (*it->second);
     count = 0;
-    for(auto it = questsCS->unk2.begin(); count < 350 && it != inventoryCS->unk2.end(); count++, it++)
+    for(auto it = questsCS->unk2.begin(); count < 350 && it != questsCS->unk2.end(); count++, it++)
         csSave.questUnk2[count] = (*it->second);
     count = 0;
-    for(auto it = questsCS->unk3.begin(); count < 350 && it != inventoryCS->unk3.end(); count++, it++)
+    for(auto it = questsCS->unk3.begin(); count < 350 && it != questsCS->unk3.end(); count++, it++)
         csSave.questUnk3[count] = (*it->second);
     csSave.questUnk4 = questsCS->unk4;
 
@@ -158,7 +158,7 @@ void TestSave(HSQUIRRELVM vm) {
     count = 0;
     for(auto it = digilineCS->unk3.begin(); count < 30 && it != digilineCS->unk3.end(); count++, it++)
         csSave.digiline3[count] = *(*it);
-    std::copy(digilineCS->field4_0x50.begin(), digilineCS->field4_0x50.end(), std::begin(csSave.digilineUnk);
+    std::copy(digilineCS->field4_0x50.begin(), digilineCS->field4_0x50.end(), std::begin(csSave.digilineUnk));
     
     count = 0;
     for(auto it = digilineCS->field5_0x68.begin(); count < 90 && it != digilineCS->field5_0x68.end(); count++, it++)
@@ -175,70 +175,70 @@ void TestSave(HSQUIRRELVM vm) {
 
     count = 0;
     for(auto it = scanDataHM.begin(); count < 400 && it != scanDataHM.end(); count++, it++)
-        HMSave.scanData[count] = *it->second;
+        hmSave.scanData[count] = *it->second;
     
     count = 0;
     for(auto it = digimonHM->bank.begin(); count < 300 && it != digimonHM->bank.end(); count++, it++)
-        HMSave.bank[count] = (*it);
-    HMSave.bankSize = digimonHM->bankSize;
+        hmSave.bank[count] = (*it);
+    hmSave.bankSize = digimonHM->bankSize;
 
     for(int32_t i = 0; i < 5; i++)
     {
         count = 0;
         for(auto it = digimonHM->farm[i].begin(); count < 10 && it != digimonHM->farm[i].end(); count++, it++)
-            HMSave.farm[i][count] = (*it);
+            hmSave.farm[i][count] = (*it);
     }
 
     for(auto it = digimonHM->party.begin(); count < 11 && it != digimonHM->party.end(); count++, it++)
-        HMSave.party[count] = (*it);
+        hmSave.party[count] = (*it);
 
     for(auto it = digimonHM->guestDigimon.begin(); count < 2 && it != digimonHM->guestDigimon.end(); count++, it++)
-        HMSave.guest[count] = (*it);
+        hmSave.guest[count] = (*it);
 
-    HMSave.context_0x18 = context0x18HM->data;
+    hmSave.context_0x18 = context0x18HM->data;
 
     count = 0;
     for(auto it = inventoryHM->bag.begin(); count < 2000 && it != inventoryHM->bag.end(); count++, it++)
-        HMSave.inventoryBag[count] = *(*it);
+        hmSave.inventoryBag[count] = *(*it);
 
     count = 0;
     for(auto it = inventoryHM->unk1.begin(); count < 100 && it != inventoryHM->unk1.end(); count++, it++)
-        HMSave.inventoryUnk1[count] = *(*it);
+        hmSave.inventoryUnk1[count] = *(*it);
 
     count = 0;
     for(auto it = inventoryHM->unk2.begin(); count < 100 && it != inventoryHM->unk2.end(); count++, it++)
-        HMSave.inventoryUnk2[count] = *(*it);
+        hmSave.inventoryUnk2[count] = *(*it);
 
-    HMSave.player = playerHM->data;
+    hmSave.player = playerHM->data;
     count = 0;
     for(auto it = playerHM->learnedSkills.begin(); count < 30 && it != playerHM->learnedSkills.end(); count++, it++)
-        HMSave.hackingSkills = *(*it);
+        hmSave.hackingSkills[count] = *(*it);
     
     count = 0;
-    for(auto it = questsHM->unk1.begin(); count < 350 && it != inventoryHM->unk1.end(); count++, it++)
-        HMSave.questUnk1[count] = (*it->second);
+    for(auto it = questsHM->unk1.begin(); count < 350 && it != questsHM->unk1.end(); count++, it++)
+        hmSave.questUnk1[count] = (*it->second);
     count = 0;
-    for(auto it = questsHM->unk2.begin(); count < 350 && it != inventoryHM->unk2.end(); count++, it++)
-        HMSave.questUnk2[count] = (*it->second);
+    for(auto it = questsHM->unk2.begin(); count < 350 && it != questsHM->unk2.end(); count++, it++)
+        hmSave.questUnk2[count] = (*it->second);
     count = 0;
-    for(auto it = questsHM->unk3.begin(); count < 350 && it != inventoryHM->unk3.end(); count++, it++)
-        HMSave.questUnk3[count] = (*it->second);
-    HMSave.questUnk4 = questsHM->unk4;
+    for(auto it = questsHM->unk3.begin(); count < 350 && it != questsHM->unk3.end(); count++, it++)
+        hmSave.questUnk3[count] = (*it->second);
+    hmSave.questUnk4 = questsHM->unk4;
 
     count = 0;
     for(auto it = digilineHM->unk1.begin(); count < 30 && it != digilineHM->unk1.end(); count++, it++)
-        HMSave.digiline1[count] = *(*it);
+        hmSave.digiline1[count] = *(*it);
     count = 0;
     for(auto it = digilineHM->unk2.begin(); count < 30 && it != digilineHM->unk2.end(); count++, it++)
-        HMSave.digiline2[count] = *(*it);
+        hmSave.digiline2[count] = *(*it);
     count = 0;
     for(auto it = digilineHM->unk3.begin(); count < 30 && it != digilineHM->unk3.end(); count++, it++)
-        HMSave.digiline3[count] = *(*it);
-    std::copy(digilineHM->field4_0x50.begin(), digilineHM->field4_0x50.end(), std::begin(HMSave.digilineUnk);
+        hmSave.digiline3[count] = *(*it);
+    std::copy(digilineHM->field4_0x50.begin(), digilineHM->field4_0x50.end(), std::begin(hmSave.digilineUnk));
     
     count = 0;
     for(auto it = digilineHM->field5_0x68.begin(); count < 90 && it != digilineHM->field5_0x68.end(); count++, it++)
-        HMSave.digiline4[count] = *(*it);
+        hmSave.digiline4[count] = *(*it);
 
     output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
