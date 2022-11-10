@@ -31,6 +31,16 @@ namespace dscs
             this->digimonPtr = *entry.digimonPtr;
             return *this;
         }
+
+        FarmSaveEntry& operator=(const PartyEntry* entry)
+        {
+            this->isFilled = entry->isFilled;
+            this->field4_0x4 = entry->field4_0x4;
+            this->field5_0x8 = entry->field5_0x8;
+            this->field6_0xc = entry->field6_0xc;
+            this->digimonPtr = *entry->digimonPtr;
+            return *this;
+        }
     };
 
     struct BankSaveEntry
@@ -49,6 +59,15 @@ namespace dscs
             this->field4_0x4 = entry.field4_0x4;
             this->field5_0x8 = entry.field5_0x8;
             this->digimonPtr = *entry.digimonPtr;
+            return *this;
+        }
+        
+        BankSaveEntry& operator=(const PartyEntry* entry)
+        {
+            this->isFilled = entry->isFilled;
+            this->field4_0x4 = entry->field4_0x4;
+            this->field5_0x8 = entry->field5_0x8;
+            this->digimonPtr = *entry->digimonPtr;
             return *this;
         }
     };
