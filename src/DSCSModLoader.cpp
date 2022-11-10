@@ -91,7 +91,7 @@ void TestSave(HSQUIRRELVM vm) {
     auto digimonCS = context->digimonCS;
     auto& scanDataCS = digimonCS->scanData;
     for(auto it = scanDataCS.begin(); count < 400 && it != scanDataCS.end(); count++, it++)
-        csSave.scanData[count] = (*it)->second;
+        csSave.scanData[count] = it->second;
     
     for(auto it = digimonCS->bank.begin() count < 300 && it != digimonCS->bank.end(); count++, it++)
         csSave.bank[count] = (*it);
