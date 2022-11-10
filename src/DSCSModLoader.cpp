@@ -99,6 +99,13 @@ void TestSave(HSQUIRRELVM vm) {
         csSave.bank[count] = (*it);
     csSave.bankSize = digimonCS->bankSize;
 
+    for(int32_t i = 0; i < 5; i++)
+    {
+        count = 0;
+        for(auto it = digimonCS->farm[i].begin(); count < 10 && it != digimonCS->farm[i].end(); count++, it++)
+            csSave.farm[i][count] = (*it);
+    }
+
     output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
 
