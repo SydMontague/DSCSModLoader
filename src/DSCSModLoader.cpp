@@ -61,6 +61,8 @@ void TestSave(HSQUIRRELVM vm) {
     std::ofstream output("testsave.bin", std::ios::binary);
 
     dscs::Savegame save{};
+    dscs::StorySave& hmSave = save.saveHM;
+    dscs::StorySave& csSave = save.saveCS;
     dscs::GameContext* context = dscs::getGameContext();
     std::map<int32_t, dscs::SeenData*>* seenData = dscs::getSeenData();
 
@@ -88,12 +90,14 @@ void TestSave(HSQUIRRELVM vm) {
     
     auto digimonCS = context->digimonCS;
     auto& scanDataCS = digimonCS->scanData;
+    count = 0;
     for(auto it = scanDataCS.begin(); count < 400 && it != scanDataCS.end(); count++, it++)
-        save.saveHM.scanData[count] = it->second;
+        csSave.scanData[count] = it->second;
     
+    count = 0;
     for(auto it = digimonCS->bank.begin(); count < 300 && it != digimonCS->bank.end(); count++, it++)
-        save.saveHM.bank[count] = (*it);
-    save.saveHM.bankSize = digimonCS->bankSize;
+        csSave.bank[count] = (*it);
+    csSave.bankSize = digimonCS->bankSize;
 
     output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
