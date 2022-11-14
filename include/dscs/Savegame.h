@@ -90,7 +90,7 @@ namespace dscs
         FarmSaveEntry farm[5][10];
         BankSaveEntry party[11];
         BankSaveEntry guest[2];
-        GameContext0x18_data context_0x18;
+        DigiFarmData digiFarm;
         InventoryItem inventoryBag[2000];
         InventoryItem inventoryUnk1[100];
         InventoryItem inventoryUnk2[100];

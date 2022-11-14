@@ -3,7 +3,7 @@
 #include "GameContext/Inventory.h"
 #include "GameContext/Settings.h"
 #include "GameContext/Player.h"
-#include "GameContext/Context0x18.h"
+#include "GameContext/DigiFarm.h"
 #include "GameContext/Quest.h"
 #include "GameContext/Digiline.h"
 #include "GameContext/OnlineBattleBox.h"
@@ -71,7 +71,7 @@ namespace dscs
     public:
         FlagArray* flags;
         DigimonContext* digimonCS;
-        GameContext_0x18* unk0x18_CS;
+        DigiFarm* digiFarmCS;
         Inventory* inventoryCS;
         Workspace* work;
         PlayerStruct* playerCS;
@@ -81,7 +81,7 @@ namespace dscs
         UserStats* stats;
         OnlineBattleBox* battleBox;
         DigimonContext* digimonHM;
-        GameContext_0x18* unk0x18_HM;
+        DigiFarm* digiFarmHM;
         Inventory* inventoryHM;
         PlayerStruct* playerHM;
         QuestsStruct* questsHM;

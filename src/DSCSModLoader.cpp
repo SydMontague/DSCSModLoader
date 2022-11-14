@@ -95,7 +95,7 @@ void TestSave(HSQUIRRELVM vm) {
     auto questsCS = context->questsCS;
     auto digilineCS = context->digilineCS;
     auto playerCS = context->playerCS;
-    auto context0x18CS = context->unk0x18_CS;
+    auto digiFarmCS = context->digiFarmCS;
 
     count = 0;
     for(auto it = scanDataCS.begin(); count < 400 && it != scanDataCS.end(); count++, it++)
@@ -121,7 +121,7 @@ void TestSave(HSQUIRRELVM vm) {
     for(auto it = digimonCS->guestDigimon.begin(); count < 2 && it != digimonCS->guestDigimon.end(); count++, it++)
         csSave.guest[count] = (*it);
 
-    csSave.context_0x18 = context0x18CS->data;
+    csSave.digiFarm = digiFarmCS->data;
 
     count = 0;
     for(auto it = inventoryCS->bag.begin(); count < 2000 && it != inventoryCS->bag.end(); count++, it++)
@@ -173,7 +173,7 @@ void TestSave(HSQUIRRELVM vm) {
     auto questsHM = context->questsHM;
     auto digilineHM = context->digilineHM;
     auto playerHM = context->playerHM;
-    auto context0x18HM = context->unk0x18_HM;
+    auto digiFarmHM = context->digiFarmHM;
 
     count = 0;
     for(auto it = scanDataHM.begin(); count < 400 && it != scanDataHM.end(); count++, it++)
@@ -199,7 +199,7 @@ void TestSave(HSQUIRRELVM vm) {
     for(auto it = digimonHM->guestDigimon.begin(); count < 2 && it != digimonHM->guestDigimon.end(); count++, it++)
         hmSave.guest[count] = (*it);
 
-    hmSave.context_0x18 = context0x18HM->data;
+    hmSave.digiFarm = digiFarmHM->data;
 
     count = 0;
     for(auto it = inventoryHM->bag.begin(); count < 2000 && it != inventoryHM->bag.end(); count++, it++)
