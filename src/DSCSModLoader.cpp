@@ -2,19 +2,20 @@
 
 #include "ScriptExtension.h"
 #include "dscs/GameInterface.h"
+#include "dscs/Savegame.h"
 #include "modloader/plugin.h"
 #include "modloader/utils.h"
-#include "dscs/Savegame.h"
 
 #include <Windows.h>
 
+#include <algorithm>
 #include <cstdarg>
 #include <filesystem>
 #include <format>
 #include <fstream>
 #include <map>
+#include <ranges>
 #include <vector>
-#include <algorithm>
 
 // force Windows 7 WINAPI, so Boost::log works. Seems like a Boost bug
 #define BOOST_USE_WINAPI_VERSION 0x0601
@@ -57,201 +58,101 @@ void initializeLogging()
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
 }
 
-void TestSave(HSQUIRRELVM vm) {
+template<typename Input, typename Output, typename Extractor>
+void copy_max(Input& container, Output output, std::size_t max, Extractor func)
+{
+    uint32_t count = 0;
+    for (auto it = container.begin(); count < max && it != container.end(); count++, output++, it++)
+        *output = func(it);
+}
+
+template<typename Input, typename Output, typename Extractor>
+void copy_max(Input* container, Output output, std::size_t max, Extractor func)
+{
+    uint32_t count = 0;
+    for (auto it = container->begin(); count < max && it != container->end(); count++, output++, it++)
+        *output = func(it);
+}
+
+void saveStory(dscs::StorySave& csSave, bool isHM)
+{
+    auto context     = dscs::getGameContext();
+    auto digimonCS   = isHM ? context->digimonHM : context->digimonCS;
+    auto inventoryCS = isHM ? context->inventoryHM : context->inventoryCS;
+    auto questsCS    = isHM ? context->questsHM : context->questsCS;
+    auto digilineCS  = isHM ? context->digilineHM : context->digilineCS;
+    auto playerCS    = isHM ? context->playerHM : context->playerCS;
+    auto digiFarmCS  = isHM ? context->digiFarmHM : context->digiFarmCS;
+
+    copy_max(digimonCS->scanData, std::begin(csSave.scanData), 400, [&](auto& val) { return *val->second; });
+
+    copy_max(digimonCS->bank, std::begin(csSave.bank), 300, [&](auto& val) { return *val; });
+    csSave.bankSize = digimonCS->bankSize;
+    for (int32_t i = 0; i < 5; i++)
+        copy_max(digimonCS->farm[i], std::begin(csSave.farm[i]), 10, [&](auto& val) { return *val; });
+    copy_max(digimonCS->party, std::begin(csSave.party), 11, [&](auto& val) { return *val; });
+    copy_max(digimonCS->guestDigimon, std::begin(csSave.guest), 2, [&](auto& val) { return *val; });
+
+    csSave.digiFarm = digiFarmCS->data;
+
+    copy_max(inventoryCS->bag, std::begin(csSave.inventoryBag), 2000, [&](auto& val) { return **val; });
+    copy_max(inventoryCS->unk1, std::begin(csSave.inventoryUnk1), 100, [&](auto& val) { return **val; });
+    copy_max(inventoryCS->unk2, std::begin(csSave.inventoryUnk2), 100, [&](auto& val) { return **val; });
+
+    csSave.player = playerCS->data;
+    copy_max(playerCS->learnedSkills, csSave.hackingSkills, 30, [&](auto& val) { return **val; });
+
+    copy_max(questsCS->unk1, std::begin(csSave.questUnk1), 350, [&](auto& val) { return *val->second; });
+    copy_max(questsCS->unk2, std::begin(csSave.questUnk2), 350, [&](auto& val) { return *val->second; });
+    copy_max(questsCS->unk3, std::begin(csSave.questUnk3), 350, [&](auto& val) { return *val->second; });
+    csSave.questUnk4 = questsCS->unk4;
+
+    copy_max(digilineCS->unk1, std::begin(csSave.digiline1), 30, [&](auto& val) { return **val; });
+    copy_max(digilineCS->unk2, std::begin(csSave.digiline2), 30, [&](auto& val) { return **val; });
+    copy_max(digilineCS->unk3, std::begin(csSave.digiline3), 30, [&](auto& val) { return **val; });
+    std::copy(digilineCS->field4_0x50.begin(), digilineCS->field4_0x50.end(), std::begin(csSave.digilineUnk));
+    copy_max(digilineCS->field5_0x68, std::begin(csSave.digiline4), 90, [&](auto& val) { return **val; });
+}
+
+void TestSave(HSQUIRRELVM vm)
+{
     std::ofstream output("testsave.bin", std::ios::binary);
 
     dscs::Savegame save{};
-    dscs::StorySave& hmSave = save.saveHM;
-    dscs::StorySave& csSave = save.saveCS;
-    dscs::GameContext* context = dscs::getGameContext();
-    std::map<int32_t, dscs::SeenData*>* seenData = dscs::getSeenData();
+    auto context  = dscs::getGameContext();
+    auto seenData = dscs::getSeenData();
 
     save.version = 0x13;
     std::copy(std::begin(context->flags->flags), std::end(context->flags->flags), std::begin(save.flags));
-    uint32_t count = 0;
-    for(auto it = seenData->begin(); count < 400 && it != seenData->end(); count++, it++)
-        save.seenData[count] = *it->second;
+    copy_max(seenData, std::begin(save.seenData), 400, [&](auto& val) { return *val->second; });
     std::copy(std::begin(context->work->flags), std::end(context->work->flags), std::begin(save.work));
-    save.settings = context->settings->data;
-    save.stats = context->stats->data;
+    save.settings      = context->settings->data;
+    save.stats         = context->stats->data;
     save.battleBoxData = context->battleBox->data;
 
-    for(int32_t i = 0; i < 6; i++)
+    for (int32_t i = 0; i < 6; i++)
     {
-        auto& saveBox = save.battleBoxes[i];
+        auto& saveBox    = save.battleBoxes[i];
         auto& contextBox = context->battleBox->boxes[i];
 
         saveBox.field0_0x0 = contextBox.field0_0x0;
         std::copy(std::begin(contextBox.name), std::end(contextBox.name), saveBox.name);
-
-        for(int32_t j = 0; j < 11; j++)
-            saveBox.party[j] = contextBox.party[j];
-    }
-    
-    // CS Save
-    auto digimonCS = context->digimonCS;
-    auto& scanDataCS = digimonCS->scanData;
-    auto inventoryCS = context->inventoryCS;
-    auto questsCS = context->questsCS;
-    auto digilineCS = context->digilineCS;
-    auto playerCS = context->playerCS;
-    auto digiFarmCS = context->digiFarmCS;
-
-    count = 0;
-    for(auto it = scanDataCS.begin(); count < 400 && it != scanDataCS.end(); count++, it++)
-        csSave.scanData[count] = *it->second;
-    
-    count = 0;
-    for(auto it = digimonCS->bank.begin(); count < 300 && it != digimonCS->bank.end(); count++, it++)
-        csSave.bank[count] = (*it);
-    csSave.bankSize = digimonCS->bankSize;
-
-    for(int32_t i = 0; i < 5; i++)
-    {
-        count = 0;
-        for(auto it = digimonCS->farm[i].begin(); count < 10 && it != digimonCS->farm[i].end(); count++, it++)
-            csSave.farm[i][count] = (*it);
+        std::copy_n(std::begin(contextBox.party), 11, std::begin(saveBox.party));
     }
 
-    count = 0;
-    for(auto it = digimonCS->party.begin(); count < 11 && it != digimonCS->party.end(); count++, it++)
-        csSave.party[count] = (*it);
-
-    count = 0;
-    for(auto it = digimonCS->guestDigimon.begin(); count < 2 && it != digimonCS->guestDigimon.end(); count++, it++)
-        csSave.guest[count] = (*it);
-
-    csSave.digiFarm = digiFarmCS->data;
-
-    count = 0;
-    for(auto it = inventoryCS->bag.begin(); count < 2000 && it != inventoryCS->bag.end(); count++, it++)
-        csSave.inventoryBag[count] = *(*it);
-
-    count = 0;
-    for(auto it = inventoryCS->unk1.begin(); count < 100 && it != inventoryCS->unk1.end(); count++, it++)
-        csSave.inventoryUnk1[count] = *(*it);
-
-    count = 0;
-    for(auto it = inventoryCS->unk2.begin(); count < 100 && it != inventoryCS->unk2.end(); count++, it++)
-        csSave.inventoryUnk2[count] = *(*it);
-
-    csSave.player = playerCS->data;
-    count = 0;
-    for(auto it = playerCS->learnedSkills.begin(); count < 30 && it != playerCS->learnedSkills.end(); count++, it++)
-        csSave.hackingSkills[count] = *(*it);
-    
-    count = 0;
-    for(auto it = questsCS->unk1.begin(); count < 350 && it != questsCS->unk1.end(); count++, it++)
-        csSave.questUnk1[count] = (*it->second);
-    count = 0;
-    for(auto it = questsCS->unk2.begin(); count < 350 && it != questsCS->unk2.end(); count++, it++)
-        csSave.questUnk2[count] = (*it->second);
-    count = 0;
-    for(auto it = questsCS->unk3.begin(); count < 350 && it != questsCS->unk3.end(); count++, it++)
-        csSave.questUnk3[count] = (*it->second);
-    csSave.questUnk4 = questsCS->unk4;
-
-    count = 0;
-    for(auto it = digilineCS->unk1.begin(); count < 30 && it != digilineCS->unk1.end(); count++, it++)
-        csSave.digiline1[count] = *(*it);
-    count = 0;
-    for(auto it = digilineCS->unk2.begin(); count < 30 && it != digilineCS->unk2.end(); count++, it++)
-        csSave.digiline2[count] = *(*it);
-    count = 0;
-    for(auto it = digilineCS->unk3.begin(); count < 30 && it != digilineCS->unk3.end(); count++, it++)
-        csSave.digiline3[count] = *(*it);
-    std::copy(digilineCS->field4_0x50.begin(), digilineCS->field4_0x50.end(), std::begin(csSave.digilineUnk));
-    
-    count = 0;
-    for(auto it = digilineCS->field5_0x68.begin(); count < 90 && it != digilineCS->field5_0x68.end(); count++, it++)
-        csSave.digiline4[count] = *(*it);
-    
-    // HM Save
-    auto digimonHM = context->digimonHM;
-    auto& scanDataHM = digimonHM->scanData;
-    auto inventoryHM = context->inventoryHM;
-    auto questsHM = context->questsHM;
-    auto digilineHM = context->digilineHM;
-    auto playerHM = context->playerHM;
-    auto digiFarmHM = context->digiFarmHM;
-
-    count = 0;
-    for(auto it = scanDataHM.begin(); count < 400 && it != scanDataHM.end(); count++, it++)
-        hmSave.scanData[count] = *it->second;
-    
-    count = 0;
-    for(auto it = digimonHM->bank.begin(); count < 300 && it != digimonHM->bank.end(); count++, it++)
-        hmSave.bank[count] = (*it);
-    hmSave.bankSize = digimonHM->bankSize;
-
-    for(int32_t i = 0; i < 5; i++)
-    {
-        count = 0;
-        for(auto it = digimonHM->farm[i].begin(); count < 10 && it != digimonHM->farm[i].end(); count++, it++)
-            hmSave.farm[i][count] = (*it);
-    }
-
-    count = 0;
-    for(auto it = digimonHM->party.begin(); count < 11 && it != digimonHM->party.end(); count++, it++)
-        hmSave.party[count] = (*it);
-
-    count = 0;
-    for(auto it = digimonHM->guestDigimon.begin(); count < 2 && it != digimonHM->guestDigimon.end(); count++, it++)
-        hmSave.guest[count] = (*it);
-
-    hmSave.digiFarm = digiFarmHM->data;
-
-    count = 0;
-    for(auto it = inventoryHM->bag.begin(); count < 2000 && it != inventoryHM->bag.end(); count++, it++)
-        hmSave.inventoryBag[count] = *(*it);
-
-    count = 0;
-    for(auto it = inventoryHM->unk1.begin(); count < 100 && it != inventoryHM->unk1.end(); count++, it++)
-        hmSave.inventoryUnk1[count] = *(*it);
-
-    count = 0;
-    for(auto it = inventoryHM->unk2.begin(); count < 100 && it != inventoryHM->unk2.end(); count++, it++)
-        hmSave.inventoryUnk2[count] = *(*it);
-
-    hmSave.player = playerHM->data;
-    count = 0;
-    for(auto it = playerHM->learnedSkills.begin(); count < 30 && it != playerHM->learnedSkills.end(); count++, it++)
-        hmSave.hackingSkills[count] = *(*it);
-    
-    count = 0;
-    for(auto it = questsHM->unk1.begin(); count < 350 && it != questsHM->unk1.end(); count++, it++)
-        hmSave.questUnk1[count] = (*it->second);
-    count = 0;
-    for(auto it = questsHM->unk2.begin(); count < 350 && it != questsHM->unk2.end(); count++, it++)
-        hmSave.questUnk2[count] = (*it->second);
-    count = 0;
-    for(auto it = questsHM->unk3.begin(); count < 350 && it != questsHM->unk3.end(); count++, it++)
-        hmSave.questUnk3[count] = (*it->second);
-    hmSave.questUnk4 = questsHM->unk4;
-
-    count = 0;
-    for(auto it = digilineHM->unk1.begin(); count < 30 && it != digilineHM->unk1.end(); count++, it++)
-        hmSave.digiline1[count] = *(*it);
-    count = 0;
-    for(auto it = digilineHM->unk2.begin(); count < 30 && it != digilineHM->unk2.end(); count++, it++)
-        hmSave.digiline2[count] = *(*it);
-    count = 0;
-    for(auto it = digilineHM->unk3.begin(); count < 30 && it != digilineHM->unk3.end(); count++, it++)
-        hmSave.digiline3[count] = *(*it);
-    std::copy(digilineHM->field4_0x50.begin(), digilineHM->field4_0x50.end(), std::begin(hmSave.digilineUnk));
-    
-    count = 0;
-    for(auto it = digilineHM->field5_0x68.begin(); count < 90 && it != digilineHM->field5_0x68.end(); count++, it++)
-        hmSave.digiline4[count] = *(*it);
+    saveStory(save.saveCS, false);
+    saveStory(save.saveHM, true);
 
     output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
 
-void Test(HSQUIRRELVM vm) {
+void Test(HSQUIRRELVM vm)
+{
     std::map<int32_t, dscs::SeenData*>* data = dscs::getSeenData();
 
-    for(auto& seenData : *data)
-        std::cout << seenData.second->entryId << " " << seenData.second->seenState << " " << seenData.second->field2_0x6 << std::endl;
+    for (auto& seenData : *data)
+        std::cout << seenData.second->entryId << " " << seenData.second->seenState << " " << seenData.second->field2_0x6
+                  << std::endl;
 
     data->at(9)->seenState = 0;
 }
