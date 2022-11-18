@@ -69,59 +69,54 @@ void copy_max(Input& container, Output output, std::size_t max, Extractor func)
 template<typename Input, typename Output, typename Extractor>
 void copy_max(Input* container, Output output, std::size_t max, Extractor func)
 {
-    uint32_t count = 0;
-    for (auto it = container->begin(); count < max && it != container->end(); count++, output++, it++)
-        *output = func(it);
+    copy_max(*container, output, max, func);
 }
 
 void saveStory(dscs::StorySave& csSave, bool isHM)
 {
     auto context     = dscs::getGameContext();
-    auto digimonCS   = isHM ? context->digimonHM : context->digimonCS;
-    auto inventoryCS = isHM ? context->inventoryHM : context->inventoryCS;
-    auto questsCS    = isHM ? context->questsHM : context->questsCS;
-    auto digilineCS  = isHM ? context->digilineHM : context->digilineCS;
-    auto playerCS    = isHM ? context->playerHM : context->playerCS;
-    auto digiFarmCS  = isHM ? context->digiFarmHM : context->digiFarmCS;
+    auto digimon   = isHM ? context->digimonHM : context->digimonCS;
+    auto inventory = isHM ? context->inventoryHM : context->inventoryCS;
+    auto quests    = isHM ? context->questsHM : context->questsCS;
+    auto digiline  = isHM ? context->digilineHM : context->digilineCS;
+    auto player    = isHM ? context->playerHM : context->playerCS;
+    auto digiFarm  = isHM ? context->digiFarmHM : context->digiFarmCS;
 
-    copy_max(digimonCS->scanData, std::begin(csSave.scanData), 400, [&](auto& val) { return *val->second; });
+    copy_max(digimon->scanData, std::begin(csSave.scanData), 400, [&](auto& val) { return *val->second; });
 
-    copy_max(digimonCS->bank, std::begin(csSave.bank), 300, [&](auto& val) { return *val; });
-    csSave.bankSize = digimonCS->bankSize;
+    copy_max(digimon->bank, std::begin(csSave.bank), 300, [&](auto& val) { return *val; });
+    csSave.bankSize = digimon->bankSize;
     for (int32_t i = 0; i < 5; i++)
-        copy_max(digimonCS->farm[i], std::begin(csSave.farm[i]), 10, [&](auto& val) { return *val; });
-    copy_max(digimonCS->party, std::begin(csSave.party), 11, [&](auto& val) { return *val; });
-    copy_max(digimonCS->guestDigimon, std::begin(csSave.guest), 2, [&](auto& val) { return *val; });
+        copy_max(digimon->farm[i], std::begin(csSave.farm[i]), 10, [&](auto& val) { return *val; });
+    copy_max(digimon->party, std::begin(csSave.party), 11, [&](auto& val) { return *val; });
+    copy_max(digimon->guestDigimon, std::begin(csSave.guest), 2, [&](auto& val) { return *val; });
 
-    csSave.digiFarm = digiFarmCS->data;
+    csSave.digiFarm = digiFarm->data;
 
-    copy_max(inventoryCS->bag, std::begin(csSave.inventoryBag), 2000, [&](auto& val) { return **val; });
-    copy_max(inventoryCS->unk1, std::begin(csSave.inventoryUnk1), 100, [&](auto& val) { return **val; });
-    copy_max(inventoryCS->unk2, std::begin(csSave.inventoryUnk2), 100, [&](auto& val) { return **val; });
+    copy_max(inventory->bag, std::begin(csSave.inventoryBag), 2000, [&](auto& val) { return **val; });
+    copy_max(inventory->unk1, std::begin(csSave.inventoryUnk1), 100, [&](auto& val) { return **val; });
+    copy_max(inventory->unk2, std::begin(csSave.inventoryUnk2), 100, [&](auto& val) { return **val; });
 
-    csSave.player = playerCS->data;
-    copy_max(playerCS->learnedSkills, csSave.hackingSkills, 30, [&](auto& val) { return **val; });
+    csSave.player = player->data;
+    copy_max(player->learnedSkills, csSave.hackingSkills, 30, [&](auto& val) { return **val; });
 
-    copy_max(questsCS->unk1, std::begin(csSave.questUnk1), 350, [&](auto& val) { return *val->second; });
-    copy_max(questsCS->unk2, std::begin(csSave.questUnk2), 350, [&](auto& val) { return *val->second; });
-    copy_max(questsCS->unk3, std::begin(csSave.questUnk3), 350, [&](auto& val) { return *val->second; });
-    csSave.questUnk4 = questsCS->unk4;
+    copy_max(quests->unk1, std::begin(csSave.questUnk1), 350, [&](auto& val) { return *val->second; });
+    copy_max(quests->unk2, std::begin(csSave.questUnk2), 350, [&](auto& val) { return *val->second; });
+    copy_max(quests->unk3, std::begin(csSave.questUnk3), 350, [&](auto& val) { return *val->second; });
+    csSave.questUnk4 = quests->unk4;
 
-    copy_max(digilineCS->unk1, std::begin(csSave.digiline1), 30, [&](auto& val) { return **val; });
-    copy_max(digilineCS->unk2, std::begin(csSave.digiline2), 30, [&](auto& val) { return **val; });
-    copy_max(digilineCS->unk3, std::begin(csSave.digiline3), 30, [&](auto& val) { return **val; });
-    std::copy(digilineCS->field4_0x50.begin(), digilineCS->field4_0x50.end(), std::begin(csSave.digilineUnk));
-    copy_max(digilineCS->field5_0x68, std::begin(csSave.digiline4), 90, [&](auto& val) { return **val; });
+    copy_max(digiline->unk1, std::begin(csSave.digiline1), 30, [&](auto& val) { return **val; });
+    copy_max(digiline->unk2, std::begin(csSave.digiline2), 30, [&](auto& val) { return **val; });
+    copy_max(digiline->unk3, std::begin(csSave.digiline3), 30, [&](auto& val) { return **val; });
+    std::copy(digiline->field4_0x50.begin(), digiline->field4_0x50.end(), std::begin(csSave.digilineUnk));
+    copy_max(digiline->field5_0x68, std::begin(csSave.digiline4), 90, [&](auto& val) { return **val; });
 }
 
-void TestSave(HSQUIRRELVM vm)
-{
-    std::ofstream output("testsave.bin", std::ios::binary);
-
-    dscs::Savegame save{};
+void createSave(void* empty, dscs::Savegame& save) {
     auto context  = dscs::getGameContext();
     auto seenData = dscs::getSeenData();
 
+    save         = {}; // set empty
     save.version = 0x13;
     std::copy(std::begin(context->flags->flags), std::end(context->flags->flags), std::begin(save.flags));
     copy_max(seenData, std::begin(save.seenData), 400, [&](auto& val) { return *val->second; });
@@ -142,6 +137,15 @@ void TestSave(HSQUIRRELVM vm)
 
     saveStory(save.saveCS, false);
     saveStory(save.saveHM, true);
+}
+
+void TestSave(HSQUIRRELVM vm)
+{
+    std::ofstream output("testsave.bin", std::ios::binary);
+
+    dscs::Savegame save{};
+   
+    createSave(NULL, save);
 
     output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
@@ -444,6 +448,8 @@ void DSCSModLoaderImpl::init()
 
     redirectCall(&_archiveListInit, 0x2CF1BA);
     redirectJump(getBaseOffset() + 0x2CF2F1, 0x2CF1C6);
+
+    redirectJump(&createSave, 0x288990);
 
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 
