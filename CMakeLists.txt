@@ -29,7 +29,7 @@ target_sources(DSCSModLoader
     "src/squirrel.cpp" 
     "src/GameInterface.cpp" 
     "src/utils.cpp" 
-    "src/ScriptExtension.cpp" 
+    "src/ScriptExtension.cpp"
 )
 
 target_include_directories(

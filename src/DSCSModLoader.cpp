@@ -7,6 +7,7 @@
 #include "modloader/utils.h"
 
 #include <Windows.h>
+#include <stdio.h>
 
 #include <algorithm>
 #include <cstdarg>
@@ -72,9 +73,61 @@ void copy_max(Input* container, Output output, std::size_t max, Extractor func)
     copy_max(*container, output, max, func);
 }
 
-void saveStory(dscs::StorySave& csSave, bool isHM)
+void writeSaveFile()
 {
-    auto context     = dscs::getGameContext();
+    struct SlotSaveData
+    {
+        int32_t data[194];
+        time_t time;
+    };
+
+    auto gameSaveData = dscs::getGameSaveData();
+    auto saveSlot     = gameSaveData->saveSlot;
+    char saveDirPath[208]{};
+    SlotSaveData slotData{};
+
+    dscs::createSaveDir();
+    dscs::getSaveDirPath(saveDirPath);
+    auto gameFile = std::format("{}{:04}.bin", saveDirPath, saveSlot);
+    auto slotFile = std::format("{}slot_{:04}.bin", saveDirPath, saveSlot);
+
+    // slot file
+    mediavision::vfs::deleteFile(slotFile.c_str());
+    std::copy(std::begin(gameSaveData->slotData), std::end(gameSaveData->slotData), std::begin(slotData.data));
+    slotData.time = _time64(NULL);
+    dscs::encryptSaveFile(&slotData, sizeof(slotData), 0x6e6f6d6f6b6f5440); // @Tokomon
+    auto slotResult = mediavision::vfs::writeFile(slotFile.c_str(), &slotData, sizeof(slotData));
+
+    if (slotResult == 0)
+        gameSaveData->saveResponseCode = 5;
+    else
+    {
+        dscs::Savegame* gameFileBuffer = new dscs::Savegame();
+        auto size                      = gameSaveData->saveSaveSize;
+
+        mediavision::vfs::deleteFile(gameFile.c_str());
+
+        *gameFileBuffer = *gameSaveData->saveSave;
+        dscs::encryptSaveFile(gameFileBuffer, size, 0x6e6f6d696c694c40); // @Lilimon
+        auto writeGameResult = mediavision::vfs::writeFile(gameFile.c_str(), gameFileBuffer, size);
+
+        gameSaveData->saveResponseCode = 2;
+        if (writeGameResult == 0)
+        {
+            mediavision::vfs::deleteFile(slotFile.c_str());
+            gameSaveData->saveResponseCode = 5;
+        }
+
+        delete gameFileBuffer;
+    }
+
+    gameSaveData->saveThreadActive = false;
+    dscs::endThread(0);
+}
+
+void saveStory(dscs::StorySave& save, bool isHM)
+{
+    auto context   = dscs::getGameContext();
     auto digimon   = isHM ? context->digimonHM : context->digimonCS;
     auto inventory = isHM ? context->inventoryHM : context->inventoryCS;
     auto quests    = isHM ? context->questsHM : context->questsCS;
@@ -82,41 +135,42 @@ void saveStory(dscs::StorySave& csSave, bool isHM)
     auto player    = isHM ? context->playerHM : context->playerCS;
     auto digiFarm  = isHM ? context->digiFarmHM : context->digiFarmCS;
 
-    copy_max(digimon->scanData, std::begin(csSave.scanData), 400, [&](auto& val) { return *val->second; });
+    copy_max(digimon->scanData, std::begin(save.scanData), 400, [&](auto& val) { return *val->second; });
 
-    copy_max(digimon->bank, std::begin(csSave.bank), 300, [&](auto& val) { return *val; });
-    csSave.bankSize = digimon->bankSize;
+    copy_max(digimon->bank, std::begin(save.bank), 300, [&](auto& val) { return *val; });
+    save.bankSize = digimon->bankSize;
     for (int32_t i = 0; i < 5; i++)
-        copy_max(digimon->farm[i], std::begin(csSave.farm[i]), 10, [&](auto& val) { return *val; });
-    copy_max(digimon->party, std::begin(csSave.party), 11, [&](auto& val) { return *val; });
-    copy_max(digimon->guestDigimon, std::begin(csSave.guest), 2, [&](auto& val) { return *val; });
+        copy_max(digimon->farm[i], std::begin(save.farm[i]), 10, [&](auto& val) { return *val; });
+    copy_max(digimon->party, std::begin(save.party), 11, [&](auto& val) { return *val; });
+    copy_max(digimon->guestDigimon, std::begin(save.guest), 2, [&](auto& val) { return *val; });
 
-    csSave.digiFarm = digiFarm->data;
+    save.digiFarm = digiFarm->data;
 
-    copy_max(inventory->bag, std::begin(csSave.inventoryBag), 2000, [&](auto& val) { return **val; });
-    copy_max(inventory->unk1, std::begin(csSave.inventoryUnk1), 100, [&](auto& val) { return **val; });
-    copy_max(inventory->unk2, std::begin(csSave.inventoryUnk2), 100, [&](auto& val) { return **val; });
+    copy_max(inventory->bag, std::begin(save.inventoryBag), 2000, [&](auto& val) { return **val; });
+    copy_max(inventory->unk1, std::begin(save.inventoryUnk1), 100, [&](auto& val) { return **val; });
+    copy_max(inventory->unk2, std::begin(save.inventoryUnk2), 100, [&](auto& val) { return **val; });
 
-    csSave.player = player->data;
-    copy_max(player->learnedSkills, csSave.hackingSkills, 30, [&](auto& val) { return **val; });
+    save.player = player->data;
+    copy_max(player->learnedSkills, save.hackingSkills, 30, [&](auto& val) { return **val; });
 
-    copy_max(quests->unk1, std::begin(csSave.questUnk1), 350, [&](auto& val) { return *val->second; });
-    copy_max(quests->unk2, std::begin(csSave.questUnk2), 350, [&](auto& val) { return *val->second; });
-    copy_max(quests->unk3, std::begin(csSave.questUnk3), 350, [&](auto& val) { return *val->second; });
-    csSave.questUnk4 = quests->unk4;
+    copy_max(quests->unk1, std::begin(save.questUnk1), 350, [&](auto& val) { return *val->second; });
+    copy_max(quests->unk2, std::begin(save.questUnk2), 350, [&](auto& val) { return *val->second; });
+    copy_max(quests->unk3, std::begin(save.questUnk3), 350, [&](auto& val) { return *val->second; });
+    save.questUnk4 = quests->unk4;
 
-    copy_max(digiline->unk1, std::begin(csSave.digiline1), 30, [&](auto& val) { return **val; });
-    copy_max(digiline->unk2, std::begin(csSave.digiline2), 30, [&](auto& val) { return **val; });
-    copy_max(digiline->unk3, std::begin(csSave.digiline3), 30, [&](auto& val) { return **val; });
-    std::copy(digiline->field4_0x50.begin(), digiline->field4_0x50.end(), std::begin(csSave.digilineUnk));
-    copy_max(digiline->field5_0x68, std::begin(csSave.digiline4), 90, [&](auto& val) { return **val; });
+    copy_max(digiline->unk1, std::begin(save.digiline1), 30, [&](auto& val) { return **val; });
+    copy_max(digiline->unk2, std::begin(save.digiline2), 30, [&](auto& val) { return **val; });
+    copy_max(digiline->unk3, std::begin(save.digiline3), 30, [&](auto& val) { return **val; });
+    std::copy(digiline->field4_0x50.begin(), digiline->field4_0x50.end(), std::begin(save.digilineUnk));
+    copy_max(digiline->field5_0x68, std::begin(save.digiline4), 90, [&](auto& val) { return **val; });
 }
 
-void createSave(void* empty, dscs::Savegame& save) {
+void createSave(void* empty, dscs::Savegame& save)
+{
     auto context  = dscs::getGameContext();
     auto seenData = dscs::getSeenData();
 
-    save         = {}; // set empty
+    std::memset(&save, 0, sizeof(save));
     save.version = 0x13;
     std::copy(std::begin(context->flags->flags), std::end(context->flags->flags), std::begin(save.flags));
     copy_max(seenData, std::begin(save.seenData), 400, [&](auto& val) { return *val->second; });
@@ -137,17 +191,6 @@ void createSave(void* empty, dscs::Savegame& save) {
 
     saveStory(save.saveCS, false);
     saveStory(save.saveHM, true);
-}
-
-void TestSave(HSQUIRRELVM vm)
-{
-    std::ofstream output("testsave.bin", std::ios::binary);
-
-    dscs::Savegame save{};
-   
-    createSave(NULL, save);
-
-    output.write(reinterpret_cast<char*>(&save), sizeof(save));
 }
 
 void Test(HSQUIRRELVM vm)
@@ -438,7 +481,6 @@ void DSCSModLoaderImpl::init()
     // script extensions start
     addSquirrelFunction("Debug", "Log", SQUIRREL_AWAY(DebugLog));
 
-    addSquirrelFunction("Debug", "TestSave", SQUIRREL_AWAY(TestSave));
     addSquirrelFunction("Debug", "Test", SQUIRREL_AWAY(Test));
 
     addSquirrelFunction("Digimon", "GetScan", SQUIRREL_AWAY(dscs::digimon::GetScan));
@@ -450,6 +492,7 @@ void DSCSModLoaderImpl::init()
     redirectJump(getBaseOffset() + 0x2CF2F1, 0x2CF1C6);
 
     redirectJump(&createSave, 0x288990);
+    redirectJump(&writeSaveFile, 0x2bab20);
 
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 
