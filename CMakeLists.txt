@@ -30,7 +30,7 @@ target_sources(DSCSModLoader
     "src/GameInterface.cpp" 
     "src/utils.cpp" 
     "src/ScriptExtension.cpp"
-)
+    "src/CoSave.cpp")
 
 target_include_directories(
     DSCSModLoader
