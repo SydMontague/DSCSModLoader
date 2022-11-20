@@ -10,6 +10,8 @@ typedef uint8_t undefined;
 
 namespace dscs
 {
+    // forward declaration
+    struct PartyEntry;
 
     struct FarmSaveEntry
     {
@@ -22,25 +24,9 @@ namespace dscs
         uint32_t field6_0xc;
         Digimon digimonPtr;
 
-        FarmSaveEntry& operator=(const PartyEntry& entry)
-        {
-            this->isFilled = entry.isFilled;
-            this->field4_0x4 = entry.field4_0x4;
-            this->field5_0x8 = entry.field5_0x8;
-            this->field6_0xc = entry.field6_0xc;
-            this->digimonPtr = *entry.digimonPtr;
-            return *this;
-        }
+        FarmSaveEntry& operator=(const PartyEntry& entry);
 
-        FarmSaveEntry& operator=(const PartyEntry* entry)
-        {
-            this->isFilled = entry->isFilled;
-            this->field4_0x4 = entry->field4_0x4;
-            this->field5_0x8 = entry->field5_0x8;
-            this->field6_0xc = entry->field6_0xc;
-            this->digimonPtr = *entry->digimonPtr;
-            return *this;
-        }
+        FarmSaveEntry& operator=(const PartyEntry* entry);
     };
 
     struct BankSaveEntry
@@ -53,23 +39,9 @@ namespace dscs
         uint32_t field5_0x8;
         Digimon digimonPtr;
 
-        BankSaveEntry& operator=(const PartyEntry& entry)
-        {
-            this->isFilled = entry.isFilled;
-            this->field4_0x4 = entry.field4_0x4;
-            this->field5_0x8 = entry.field5_0x8;
-            this->digimonPtr = *entry.digimonPtr;
-            return *this;
-        }
+        BankSaveEntry& operator=(const PartyEntry& entry);
 
-        BankSaveEntry& operator=(const PartyEntry* entry)
-        {
-            this->isFilled = entry->isFilled;
-            this->field4_0x4 = entry->field4_0x4;
-            this->field5_0x8 = entry->field5_0x8;
-            this->digimonPtr = *entry->digimonPtr;
-            return *this;
-        }
+        BankSaveEntry& operator=(const PartyEntry* entry);
     };
 
     struct SaveBattleBox

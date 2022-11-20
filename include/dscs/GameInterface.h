@@ -2,6 +2,7 @@
 #include "dscs/DigisterMap.h"
 #include "dscs/GameContext.h"
 #include "dscs/GameSaveData.h"
+#include "dscs/SoundStruct.h"
 
 #include <map>
 
@@ -12,6 +13,10 @@ namespace dscs
     extern __declspec(dllexport) GameContext* getGameContext();
 
     extern __declspec(dllexport) DigisterMap* getDigisterMap();
+
+    extern __declspec(dllexport) ScanData* setScanData(DigimonContext* context, int32_t digimonId, uint16_t value);
+
+    extern __declspec(dllexport) SoundStruct* getSoundStruct();
 
     // save stuff
     extern __declspec(dllexport) GameSaveData* getGameSaveData();
@@ -31,12 +36,18 @@ namespace mediavision
 {
     namespace vfs
     {
+        struct ReadHandle
+        {
+            void* buffer;
+            uint32_t size;
+        };
+
         extern __declspec(dllexport) void deleteFile(const char* path);
 
         extern __declspec(dllexport) void createFile(const char* path);
 
         extern __declspec(dllexport) uint64_t writeFile(const char* path, void* buffer, int32_t size);
 
-        extern __declspec(dllexport) bool readFile(const char* path, void* buffer);
+        extern __declspec(dllexport) bool readFile(const char* path, ReadHandle* buffer);
     } // namespace vfs
 } // namespace mediavision

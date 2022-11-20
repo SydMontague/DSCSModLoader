@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <list>
 #include <map>
 #include <ranges>
 #include <vector>
@@ -73,6 +74,36 @@ void copy_max(Input* container, Output output, std::size_t max, Extractor func)
     copy_max(*container, output, max, func);
 }
 
+void readSaveFile() { 
+    auto gameSaveData = dscs::getGameSaveData();
+    auto saveSlot     = gameSaveData->loadSlot;
+    char saveDirPath[208]{};
+    
+    dscs::getSaveDirPath(saveDirPath);
+    auto gameFile = std::format("{}{:04}.bin", saveDirPath, saveSlot);
+
+    mediavision::vfs::ReadHandle handle;
+    auto result = mediavision::vfs::readFile(gameFile.c_str(), &handle);
+
+    if (result != 0)
+    {
+        dscs::decryptSaveFile(handle.buffer, handle.size, 0x6e6f6d696c694c40); // @Lilimon
+        memcpy(gameSaveData->loadSave, handle.buffer, handle.size);
+        gameSaveData->loadSize = handle.size;
+        if (handle.buffer != NULL)
+        {
+            delete handle.buffer;
+            handle.buffer = NULL;
+        }
+        gameSaveData->loadResponseCode = 2;
+    }
+    else
+        gameSaveData->loadResponseCode = 3;
+
+    gameSaveData->loadThreadActive = false;
+    dscs::endThread(0);
+}
+
 void writeSaveFile()
 {
     struct SlotSaveData
@@ -123,6 +154,100 @@ void writeSaveFile()
 
     gameSaveData->saveThreadActive = false;
     dscs::endThread(0);
+}
+
+void loadStory(dscs::StorySave& save, bool isHM)
+{
+    auto context   = dscs::getGameContext();
+    auto digimon   = isHM ? context->digimonHM : context->digimonCS;
+    auto inventory = isHM ? context->inventoryHM : context->inventoryCS;
+    auto quests    = isHM ? context->questsHM : context->questsCS;
+    auto digiline  = isHM ? context->digilineHM : context->digilineCS;
+    auto player    = isHM ? context->playerHM : context->playerCS;
+    auto digiFarm  = isHM ? context->digiFarmHM : context->digiFarmCS;
+
+    for (auto& scanEntry : save.scanData)
+        if (scanEntry.digimonId != 0) dscs::setScanData(digimon, scanEntry.digimonId, scanEntry.scanrate);
+
+    for (int32_t i = 0; i < 300; i++)
+        *digimon->bank[i] = save.bank[i];
+    digimon->bankSize = save.bankSize;
+    for (int32_t i = 0; i < 5; i++)
+        for (int32_t j = 0; j < 10; j++)
+            *digimon->farm[i][j] = save.farm[i][j];
+
+    for (int32_t i = 0; i < 11; i++)
+        *digimon->party[i] = save.party[i];
+
+    for (int32_t i = 0; i < 2; i++)
+        *digimon->guestDigimon[i] = save.guest[i];
+
+    digiFarm->data = save.digiFarm;
+
+    for (int32_t i = 0; i < 2000; i++)
+        *inventory->bag[i] = save.inventoryBag[i];
+    for (int32_t i = 0; i < 100; i++)
+        *inventory->unk1[i] = save.inventoryUnk1[i];
+    for (int32_t i = 0; i < 100; i++)
+        *inventory->unk2[i] = save.inventoryUnk2[i];
+
+    player->data = save.player;
+
+    for (int32_t i = 0; i < 30; i++)
+        *player->learnedSkills[i] = save.hackingSkills[i];
+
+    for (int32_t i = 0; i < 350; i++)
+        if (save.questUnk1[i].id != 0) *quests->unk1.at(save.questUnk1[i].id) = save.questUnk1[i];
+    for (int32_t i = 0; i < 350; i++)
+        if (save.questUnk2[i].id != 0) *quests->unk2.at(save.questUnk2[i].id) = save.questUnk2[i];
+    for (int32_t i = 0; i < 350; i++)
+        if (save.questUnk3[i].id != 0) *quests->unk3.at(save.questUnk3[i].id) = save.questUnk3[i];
+    quests->unk4 = save.questUnk4;
+
+    for (int32_t i = 0; i < 30; i++)
+        *digiline->unk1[i] = save.digiline1[i];
+    for (int32_t i = 0; i < 30; i++)
+        *digiline->unk2[i] = save.digiline2[i];
+    for (int32_t i = 0; i < 30; i++)
+        *digiline->unk3[i] = save.digiline3[i];
+    std::copy_if(std::begin(save.digilineUnk),
+                 std::end(save.digilineUnk),
+                 digiline->field4_0x50.begin(),
+                 [](uint32_t val) { return val != 0; });
+    for (int32_t i = 0; i < 90; i++)
+        *digiline->field5_0x68[i] = save.digiline4[i];
+}
+
+void loadSave(void* empty, dscs::Savegame& save)
+{
+    auto context  = dscs::getGameContext();
+    auto seenData = dscs::getSeenData();
+
+    std::copy(std::begin(save.flags), std::end(save.flags), std::begin(context->flags->flags));
+    for (uint32_t i = 0; i < 400; i++)
+        if (save.seenData[i].entryId != 0) *seenData->at(save.seenData[i].entryId) = save.seenData[i];
+    std::copy(std::begin(save.work), std::end(save.work), std::begin(context->work->flags));
+
+    context->settings->data  = save.settings;
+    context->stats->data     = save.stats;
+    context->battleBox->data = save.battleBoxData;
+
+    for (int32_t i = 0; i < 6; i++)
+    {
+        auto& saveBox    = save.battleBoxes[i];
+        auto& contextBox = context->battleBox->boxes[i];
+
+        contextBox.field0_0x0 = saveBox.field0_0x0;
+        std::copy(std::begin(saveBox.name), std::end(saveBox.name), std::begin(contextBox.name));
+        std::copy_n(std::begin(saveBox.party), 11, std::begin(contextBox.party));
+    }
+
+    loadStory(save.saveCS, false);
+    loadStory(save.saveHM, true);
+
+    auto sound           = dscs::getSoundStruct();
+    sound->field78_0x138 = true;
+    std::for_each(sound->field3_0x28.begin(), sound->field3_0x28.end(), [](auto& val) { val.field8_0x3c = true; });
 }
 
 void saveStory(dscs::StorySave& save, bool isHM)
@@ -185,7 +310,7 @@ void createSave(void* empty, dscs::Savegame& save)
         auto& contextBox = context->battleBox->boxes[i];
 
         saveBox.field0_0x0 = contextBox.field0_0x0;
-        std::copy(std::begin(contextBox.name), std::end(contextBox.name), saveBox.name);
+        std::copy(std::begin(contextBox.name), std::end(contextBox.name), std::begin(saveBox.name));
         std::copy_n(std::begin(contextBox.party), 11, std::begin(saveBox.party));
     }
 
@@ -493,6 +618,8 @@ void DSCSModLoaderImpl::init()
 
     redirectJump(&createSave, 0x288990);
     redirectJump(&writeSaveFile, 0x2bab20);
+    redirectJump(&loadSave, 0x289bb0);
+    redirectJump(&readSaveFile, 0x2bae90);
 
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 

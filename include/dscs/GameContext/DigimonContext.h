@@ -9,6 +9,10 @@ typedef uint8_t undefined;
 
 namespace dscs
 {
+    // forward declaration
+    struct BankSaveEntry;
+    struct FarmSaveEntry;
+
     struct DigimonMove
     {
         uint32_t type;
@@ -437,6 +441,14 @@ namespace dscs
         uint32_t field5_0x8;
         uint32_t field6_0xc;
         Digimon* digimonPtr;
+
+        PartyEntry& operator=(const BankSaveEntry& entry);
+
+        PartyEntry& operator=(const BankSaveEntry* entry);
+
+        PartyEntry& operator=(const FarmSaveEntry& entry);
+
+        PartyEntry& operator=(const FarmSaveEntry* entry);
     };
 
     struct DigimonContext

@@ -14,16 +14,30 @@ namespace dscs
 
     GameContext* getGameContext()
     {
-        using Func   = dscs::GameContext* (*)();
+        using Func   = GameContext* (*)();
         const Func f = (Func)(getBaseOffset() + 0x1A70D0);
         return f();
     }
 
     DigisterMap* getDigisterMap()
     {
-        using Func   = dscs::DigisterMap* (*)();
+        using Func   = DigisterMap* (*)();
         const Func f = (Func)(getBaseOffset() + 0x2ccb20);
         return f();
+    }
+
+    SoundStruct* getSoundStruct()
+    {
+        using Func   = SoundStruct* (*)();
+        const Func f = (Func)(getBaseOffset() + 0x2bb6d0);
+        return f();
+    }
+
+    ScanData* setScanData(DigimonContext* context, int32_t digimonId, uint16_t value)
+    {
+        using Func   = ScanData* (*)(DigimonContext*, int32_t, uint16_t);
+        const Func f = (Func)(getBaseOffset() + 0x19aa60);
+        return f(context, digimonId, value);
     }
 
     GameSaveData* getGameSaveData() { return *reinterpret_cast<GameSaveData**>(getBaseOffset() + 0xF20758); }
@@ -56,10 +70,87 @@ namespace dscs
         return f(buffer, size, key);
     }
 
-    void endThread(int32_t returnValue) {
+    void endThread(int32_t returnValue)
+    {
         using Func   = void (*)(int32_t);
         const Func f = (Func)(getBaseOffset() + 0x8344c8);
         return f(returnValue);
+    }
+
+    FarmSaveEntry& FarmSaveEntry::operator=(const PartyEntry& entry)
+    {
+        this->isFilled   = entry.isFilled;
+        this->field4_0x4 = entry.field4_0x4;
+        this->field5_0x8 = entry.field5_0x8;
+        this->field6_0xc = entry.field6_0xc;
+        this->digimonPtr = *entry.digimonPtr;
+        return *this;
+    }
+
+    FarmSaveEntry& FarmSaveEntry::operator=(const PartyEntry* entry)
+    {
+        this->isFilled   = entry->isFilled;
+        this->field4_0x4 = entry->field4_0x4;
+        this->field5_0x8 = entry->field5_0x8;
+        this->field6_0xc = entry->field6_0xc;
+        this->digimonPtr = *entry->digimonPtr;
+        return *this;
+    }
+
+    BankSaveEntry& BankSaveEntry::operator=(const PartyEntry& entry)
+    {
+        this->isFilled   = entry.isFilled;
+        this->field4_0x4 = entry.field4_0x4;
+        this->field5_0x8 = entry.field5_0x8;
+        this->digimonPtr = *entry.digimonPtr;
+        return *this;
+    }
+
+    BankSaveEntry& BankSaveEntry::operator=(const PartyEntry* entry)
+    {
+        this->isFilled   = entry->isFilled;
+        this->field4_0x4 = entry->field4_0x4;
+        this->field5_0x8 = entry->field5_0x8;
+        this->digimonPtr = *entry->digimonPtr;
+        return *this;
+    }
+
+    PartyEntry& PartyEntry::operator=(const BankSaveEntry& entry)
+    {
+        this->isFilled    = entry.isFilled;
+        this->field4_0x4  = entry.field4_0x4;
+        this->field5_0x8  = entry.field5_0x8;
+        *this->digimonPtr = entry.digimonPtr;
+        return *this;
+    }
+
+    PartyEntry& PartyEntry::operator=(const BankSaveEntry* entry)
+    {
+        this->isFilled    = entry->isFilled;
+        this->field4_0x4  = entry->field4_0x4;
+        this->field5_0x8  = entry->field5_0x8;
+        *this->digimonPtr = entry->digimonPtr;
+        return *this;
+    }
+
+    PartyEntry& PartyEntry::operator=(const FarmSaveEntry& entry)
+    {
+        this->isFilled    = entry.isFilled;
+        this->field4_0x4  = entry.field4_0x4;
+        this->field5_0x8  = entry.field5_0x8;
+        this->field6_0xc  = entry.field6_0xc;
+        *this->digimonPtr = entry.digimonPtr;
+        return *this;
+    }
+
+    PartyEntry& PartyEntry::operator=(const FarmSaveEntry* entry)
+    {
+        this->isFilled    = entry->isFilled;
+        this->field4_0x4  = entry->field4_0x4;
+        this->field5_0x8  = entry->field5_0x8;
+        this->field6_0xc  = entry->field6_0xc;
+        *this->digimonPtr = entry->digimonPtr;
+        return *this;
     }
 } // namespace dscs
 
@@ -88,9 +179,9 @@ namespace mediavision
             return f(path, buffer, size);
         }
 
-        bool readFile(const char* path, void* buffer)
+        bool readFile(const char* path, ReadHandle* buffer)
         {
-            using Func   = bool (*)(const char*, void*);
+            using Func   = bool (*)(const char*, ReadHandle*);
             const Func f = (Func)(getBaseOffset() + 0x5f6c10);
             return f(path, buffer);
         }
