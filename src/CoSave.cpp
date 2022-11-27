@@ -3,32 +3,100 @@
 #include "dscs/GameInterface.h"
 #include "modloader/utils.h"
 
+#include <filesystem>
 #include <format>
 
-void readSaveFile()
+static void readSaveFile();
+static void writeSaveFile();
+static void loadStorySave(dscs::StorySave& save, bool isHM);
+static void loadSave(void* empty, dscs::Savegame& save);
+static void createStorySave(dscs::StorySave& save, bool isHM);
+static void createSave(void* empty, dscs::Savegame& save);
+
+struct CoSaveContainer
+{
+    uint32_t size;
+    uint32_t offset;
+    char name[24];
+};
+
+struct CoSave
+{
+    uint32_t magic; // 'DSCS'
+    uint32_t version;
+    uint32_t containerCount;
+    uint32_t reserved;
+    CoSaveContainer container[0];
+};
+
+struct CoSaveRuntime
+{
+    std::map<std::string, std::vector<uint8_t>> rawContainer;
+};
+
+static CoSaveRuntime runtime;
+
+bool readCoSave()
 {
     auto gameSaveData = dscs::getGameSaveData();
     auto saveSlot     = gameSaveData->loadSlot;
     char saveDirPath[208]{};
-
-    dscs::getSaveDirPath(saveDirPath);
-    auto gameFile = std::format("{}{:04}.bin", saveDirPath, saveSlot);
-
     mediavision::vfs::ReadHandle handle;
-    auto result = mediavision::vfs::readFile(gameFile.c_str(), &handle);
 
-    if (result != 0)
+    runtime.rawContainer.clear();
+    dscs::getSaveDirPath(saveDirPath);
+    auto gameFile = std::format("{}cosave_{:04}.bin", saveDirPath, saveSlot);
+    const std::filesystem::path path(gameFile);
+
+    if (!std::filesystem::exists(path)) return true;
+    if (mediavision::vfs::readFile(gameFile.c_str(), &handle) == 0) return false;
+    if (handle.size == 0) return true;
+
+    CoSave header = *reinterpret_cast<CoSave*>(handle.buffer);
+    for (int32_t i = 0; i < header.containerCount; i++)
     {
-        dscs::decryptSaveFile(handle.buffer, handle.size, 0x6e6f6d696c694c40); // @Lilimon
-        memcpy(gameSaveData->loadSave, handle.buffer, handle.size);
-        gameSaveData->loadSize = handle.size;
-        if (handle.buffer != NULL)
-        {
-            delete handle.buffer;
-            handle.buffer = NULL;
-        }
-        gameSaveData->loadResponseCode = 2;
+        CoSaveContainer container = header.container[i];
+        std::string str(container.name);
+        std::vector<uint8_t> data;
+        data.resize(container.size);
+        std::copy(handle.buffer + container.offset, handle.buffer + container.offset + container.size, data.begin());
+        runtime.rawContainer[str] = data;
     }
+
+    return true;
+}
+
+bool writeCoSave() {
+    auto gameSaveData = dscs::getGameSaveData();
+    auto saveSlot     = gameSaveData->saveSlot;
+    char saveDirPath[208]{};
+
+    dscs::createSaveDir();
+    dscs::getSaveDirPath(saveDirPath);
+    auto gameFile = std::format("{}cosave_{:04}.bin", saveDirPath, saveSlot);
+
+    mediavision::vfs::deleteFile(gameFile.c_str());
+
+    std::vector<uint8_t> data;
+    CoSave save;
+    save.magic          = 'DSCS';
+    save.version        = 1;
+    save.containerCount = runtime.rawContainer.size();
+    save.reserved = 0;
+
+    std::copy(reinterpret_cast<uint8_t*>(&save), reinterpret_cast<uint8_t*>(&save) + sizeof(save), std::back_inserter(data));
+
+    if (mediavision::vfs::writeFile(gameFile.c_str(), data.data(), data.size()) == 0) return false;
+
+    return true;
+}
+
+void readSaveFileHook()
+{
+    auto gameSaveData = dscs::getGameSaveData();
+
+    if (readCoSave())
+        readSaveFile();
     else
         gameSaveData->loadResponseCode = 3;
 
@@ -36,7 +104,53 @@ void readSaveFile()
     dscs::endThread(0);
 }
 
-void writeSaveFile()
+void writeSaveFileHook()
+{
+    auto gameSaveData = dscs::getGameSaveData();
+
+    if(writeCoSave())
+        writeSaveFile(); 
+    else
+        gameSaveData->saveResponseCode = 5;
+
+    gameSaveData->saveThreadActive = false;
+    dscs::endThread(0);
+}
+
+void loadSaveHook(void* empty, dscs::Savegame& save) { loadSave(empty, save); }
+
+void createCoSave() {
+    runtime.rawContainer.clear();
+}
+
+void createSaveHook(void* empty, dscs::Savegame& save) { 
+    createSave(empty, save); 
+    createCoSave();
+}
+
+static void readSaveFile()
+{
+    auto gameSaveData = dscs::getGameSaveData();
+    auto saveSlot     = gameSaveData->loadSlot;
+    char saveDirPath[208]{};
+    mediavision::vfs::ReadHandle handle;
+
+    dscs::getSaveDirPath(saveDirPath);
+    auto gameFile = std::format("{}{:04}.bin", saveDirPath, saveSlot);
+    auto result   = mediavision::vfs::readFile(gameFile.c_str(), &handle);
+
+    if (result != 0)
+    {
+        dscs::decryptSaveFile(handle.buffer, handle.size, 0x6e6f6d696c694c40); // @Lilimon
+        memcpy(gameSaveData->loadSave, handle.buffer, handle.size);
+        gameSaveData->loadSize         = handle.size;
+        gameSaveData->loadResponseCode = 2;
+    }
+    else
+        gameSaveData->loadResponseCode = 3;
+}
+
+static void writeSaveFile()
 {
     struct SlotSaveData
     {
@@ -65,11 +179,11 @@ void writeSaveFile()
         gameSaveData->saveResponseCode = 5;
     else
     {
+        // game file
         dscs::Savegame* gameFileBuffer = new dscs::Savegame();
         auto size                      = gameSaveData->saveSaveSize;
 
         mediavision::vfs::deleteFile(gameFile.c_str());
-
         *gameFileBuffer = *gameSaveData->saveSave;
         dscs::encryptSaveFile(gameFileBuffer, size, 0x6e6f6d696c694c40); // @Lilimon
         auto writeGameResult = mediavision::vfs::writeFile(gameFile.c_str(), gameFileBuffer, size);
@@ -83,12 +197,9 @@ void writeSaveFile()
 
         delete gameFileBuffer;
     }
-
-    gameSaveData->saveThreadActive = false;
-    dscs::endThread(0);
 }
 
-void loadStory(dscs::StorySave& save, bool isHM)
+static void loadStorySave(dscs::StorySave& save, bool isHM)
 {
     auto context   = dscs::getGameContext();
     auto digimon   = isHM ? context->digimonHM : context->digimonCS;
@@ -150,7 +261,7 @@ void loadStory(dscs::StorySave& save, bool isHM)
         *digiline->field5_0x68[i] = save.digiline4[i];
 }
 
-void loadSave(void* empty, dscs::Savegame& save)
+static void loadSave(void* empty, dscs::Savegame& save)
 {
     auto context  = dscs::getGameContext();
     auto seenData = dscs::getSeenData();
@@ -174,15 +285,15 @@ void loadSave(void* empty, dscs::Savegame& save)
         std::copy_n(std::begin(saveBox.party), 11, std::begin(contextBox.party));
     }
 
-    loadStory(save.saveCS, false);
-    loadStory(save.saveHM, true);
+    loadStorySave(save.saveCS, false);
+    loadStorySave(save.saveHM, true);
 
     auto sound           = dscs::getSoundStruct();
     sound->field78_0x138 = true;
     std::for_each(sound->field3_0x28.begin(), sound->field3_0x28.end(), [](auto& val) { val.field8_0x3c = true; });
 }
 
-void saveStory(dscs::StorySave& save, bool isHM)
+static void createStorySave(dscs::StorySave& save, bool isHM)
 {
     auto context   = dscs::getGameContext();
     auto digimon   = isHM ? context->digimonHM : context->digimonCS;
@@ -222,7 +333,7 @@ void saveStory(dscs::StorySave& save, bool isHM)
     copy_max(digiline->field5_0x68, std::begin(save.digiline4), 90, [&](auto& val) { return **val; });
 }
 
-void createSave(void* empty, dscs::Savegame& save)
+static void createSave(void* empty, dscs::Savegame& save)
 {
     auto context  = dscs::getGameContext();
     auto seenData = dscs::getSeenData();
@@ -246,6 +357,6 @@ void createSave(void* empty, dscs::Savegame& save)
         std::copy_n(std::begin(contextBox.party), 11, std::begin(saveBox.party));
     }
 
-    saveStory(save.saveCS, false);
-    saveStory(save.saveHM, true);
+    createStorySave(save.saveCS, false);
+    createStorySave(save.saveHM, true);
 }

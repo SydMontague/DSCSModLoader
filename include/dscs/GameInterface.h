@@ -38,8 +38,17 @@ namespace mediavision
     {
         struct ReadHandle
         {
-            void* buffer;
+            uint8_t* buffer;
             uint32_t size;
+
+            ~ReadHandle()
+            {
+                if (buffer != NULL)
+                {
+                    delete buffer;
+                    buffer = NULL;
+                }
+            }
         };
 
         extern __declspec(dllexport) void deleteFile(const char* path);

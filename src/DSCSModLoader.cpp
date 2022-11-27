@@ -359,10 +359,11 @@ void DSCSModLoaderImpl::init()
     redirectCall(&_archiveListInit, 0x2CF1BA);
     redirectJump(getBaseOffset() + 0x2CF2F1, 0x2CF1C6);
 
-    redirectJump(&createSave, 0x288990);
-    redirectJump(&writeSaveFile, 0x2bab20);
-    redirectJump(&loadSave, 0x289bb0);
-    redirectJump(&readSaveFile, 0x2bae90);
+    // custom save/load
+    redirectJump(&createSaveHook, 0x288990);
+    redirectJump(&writeSaveFileHook, 0x2bab20);
+    redirectJump(&loadSaveHook, 0x289bb0);
+    redirectJump(&readSaveFileHook, 0x2bae90);
 
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 
