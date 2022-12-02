@@ -1,4 +1,4 @@
-#include "modloader/CoSave.h"
+#include "CoSave.h"
 
 #include "dscs/GameInterface.h"
 #include "modloader/utils.h"
@@ -29,21 +29,19 @@ struct CoSave
     CoSaveContainer container[0];
 };
 
-struct CoSaveRuntime
+void CoSaveImpl::addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write)
 {
-    std::map<std::string, std::vector<uint8_t>> rawContainer;
-};
+    coSaveCallbacks.emplace(name, std::make_pair(read, write));
+}
 
-static CoSaveRuntime runtime;
-
-bool readCoSave()
+bool CoSaveImpl::readCoSave()
 {
     auto gameSaveData = dscs::getGameSaveData();
     auto saveSlot     = gameSaveData->loadSlot;
     char saveDirPath[208]{};
     mediavision::vfs::ReadHandle handle;
 
-    runtime.rawContainer.clear();
+    rawContainer.clear();
     dscs::getSaveDirPath(saveDirPath);
     auto gameFile = std::format("{}cosave_{:04}.bin", saveDirPath, saveSlot);
     const std::filesystem::path path(gameFile);
@@ -60,13 +58,14 @@ bool readCoSave()
         std::vector<uint8_t> data;
         data.resize(container.size);
         std::copy(handle.buffer + container.offset, handle.buffer + container.offset + container.size, data.begin());
-        runtime.rawContainer[str] = data;
+        rawContainer[str] = data;
     }
 
     return true;
 }
 
-bool writeCoSave() {
+bool CoSaveImpl::writeCoSave()
+{
     auto gameSaveData = dscs::getGameSaveData();
     auto saveSlot     = gameSaveData->saveSlot;
     char saveDirPath[208]{};
@@ -81,7 +80,7 @@ bool writeCoSave() {
     CoSave save;
     save.magic          = 'DSCS';
     save.version        = 1;
-    save.containerCount = runtime.rawContainer.size();
+    save.containerCount = rawContainer.size();
     save.reserved = 0;
 
     std::copy(reinterpret_cast<uint8_t*>(&save), reinterpret_cast<uint8_t*>(&save) + sizeof(save), std::back_inserter(data));
@@ -91,7 +90,7 @@ bool writeCoSave() {
     return true;
 }
 
-void readSaveFileHook()
+void CoSaveImpl::readSaveFileHook()
 {
     auto gameSaveData = dscs::getGameSaveData();
 
@@ -104,7 +103,7 @@ void readSaveFileHook()
     dscs::endThread(0);
 }
 
-void writeSaveFileHook()
+void CoSaveImpl::writeSaveFileHook()
 {
     auto gameSaveData = dscs::getGameSaveData();
 
@@ -117,18 +116,19 @@ void writeSaveFileHook()
     dscs::endThread(0);
 }
 
-void loadSaveHook(void* empty, dscs::Savegame& save) { loadSave(empty, save); }
+void CoSaveImpl::loadSaveHook(void* empty, dscs::Savegame& save) { loadSave(empty, save); }
 
-void createCoSave() {
-    runtime.rawContainer.clear();
+void CoSaveImpl::createCoSave() {
+    rawContainer.clear();
 }
 
-void createSaveHook(void* empty, dscs::Savegame& save) { 
+void CoSaveImpl::createSaveHook(void* empty, dscs::Savegame& save)
+{ 
     createSave(empty, save); 
     createCoSave();
 }
 
-static void readSaveFile()
+void CoSaveImpl::readSaveFile()
 {
     auto gameSaveData = dscs::getGameSaveData();
     auto saveSlot     = gameSaveData->loadSlot;
@@ -150,7 +150,7 @@ static void readSaveFile()
         gameSaveData->loadResponseCode = 3;
 }
 
-static void writeSaveFile()
+void CoSaveImpl::writeSaveFile()
 {
     struct SlotSaveData
     {
@@ -199,7 +199,7 @@ static void writeSaveFile()
     }
 }
 
-static void loadStorySave(dscs::StorySave& save, bool isHM)
+void CoSaveImpl::loadStorySave(dscs::StorySave& save, bool isHM)
 {
     auto context   = dscs::getGameContext();
     auto digimon   = isHM ? context->digimonHM : context->digimonCS;
@@ -261,7 +261,7 @@ static void loadStorySave(dscs::StorySave& save, bool isHM)
         *digiline->field5_0x68[i] = save.digiline4[i];
 }
 
-static void loadSave(void* empty, dscs::Savegame& save)
+void CoSaveImpl::loadSave(void* empty, dscs::Savegame& save)
 {
     auto context  = dscs::getGameContext();
     auto seenData = dscs::getSeenData();
@@ -293,7 +293,7 @@ static void loadSave(void* empty, dscs::Savegame& save)
     std::for_each(sound->field3_0x28.begin(), sound->field3_0x28.end(), [](auto& val) { val.field8_0x3c = true; });
 }
 
-static void createStorySave(dscs::StorySave& save, bool isHM)
+void CoSaveImpl::createStorySave(dscs::StorySave& save, bool isHM)
 {
     auto context   = dscs::getGameContext();
     auto digimon   = isHM ? context->digimonHM : context->digimonCS;
@@ -333,7 +333,7 @@ static void createStorySave(dscs::StorySave& save, bool isHM)
     copy_max(digiline->field5_0x68, std::begin(save.digiline4), 90, [&](auto& val) { return **val; });
 }
 
-static void createSave(void* empty, dscs::Savegame& save)
+void CoSaveImpl::createSave(void* empty, dscs::Savegame& save)
 {
     auto context  = dscs::getGameContext();
     auto seenData = dscs::getSeenData();

@@ -30,7 +30,8 @@ target_sources(DSCSModLoader
     "src/GameInterface.cpp" 
     "src/utils.cpp" 
     "src/ScriptExtension.cpp"
-    "src/CoSave.cpp")
+    "src/CoSave.cpp"
+    "src/SquirrelAway.cpp")
 
 target_include_directories(
     DSCSModLoader

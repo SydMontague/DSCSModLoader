@@ -5,7 +5,7 @@
 #include "dscs/Savegame.h"
 #include "modloader/plugin.h"
 #include "modloader/utils.h"
-#include "modloader/CoSave.h"
+#include "CoSave.h"
 
 #include <Windows.h>
 #include <stdio.h>
@@ -87,6 +87,7 @@ void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
 class DSCSModLoaderImpl : public DSCSModLoader
 {
 private:
+    CoSaveImpl coSave;
     std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
     std::vector<BasePlugin*> plugins;
 
@@ -97,18 +98,23 @@ private:
     void init();
     void squirrelInit(HSQUIRRELVM);
     void archiveListInit();
-
 public:
     DSCSModLoaderImpl(const DSCSModLoaderImpl&) = delete;
     void operator=(const DSCSModLoaderImpl&)    = delete;
 
     void addSquirrelFunction(const std::string& table, const std::string& name, void** functionPtr, SQFUNCTION closure);
     void addSquirrelFunction(const std::string& table, const std::string& name, SquirrelFunction data);
+    void addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write);
 
     // static functions to be used as function pointers
 private:
     static void _squirrelInit(HSQUIRRELVM vm);
     static void _archiveListInit();
+    static void _readSaveFileHook();
+    static void _writeSaveFileHook();
+    static void _loadSaveHook(void* empty, dscs::Savegame& save);
+    static void _createSaveHook(void* empty, dscs::Savegame& save);
+
     static DSCSModLoaderImpl instance;
 
 public:
@@ -118,8 +124,25 @@ public:
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 
 void DSCSModLoaderImpl::_squirrelInit(HSQUIRRELVM vm) { instance.squirrelInit(vm); }
-
 void DSCSModLoaderImpl::_archiveListInit() { instance.archiveListInit(); }
+void DSCSModLoaderImpl::_readSaveFileHook() { instance.coSave.readSaveFileHook(); }
+void DSCSModLoaderImpl::_writeSaveFileHook() { instance.coSave.writeSaveFileHook(); }
+void DSCSModLoaderImpl::_loadSaveHook(void* empty, dscs::Savegame& save) { instance.coSave.loadSaveHook(empty, save); }
+void DSCSModLoaderImpl::_createSaveHook(void* empty, dscs::Savegame& save) { instance.coSave.createSaveHook(empty, save); };
+
+void DSCSModLoaderImpl::addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write)
+{
+    coSave.addCoSaveHook(name, read, write);
+}
+
+void readScanData(std::vector<uint8_t> data) {}
+
+std::vector<uint8_t> writeScanData()
+{
+    std::vector<uint8_t> data;
+
+    return data;
+}
 
 void DSCSModLoaderImpl::archiveListInit()
 {
@@ -360,10 +383,10 @@ void DSCSModLoaderImpl::init()
     redirectJump(getBaseOffset() + 0x2CF2F1, 0x2CF1C6);
 
     // custom save/load
-    redirectJump(&createSaveHook, 0x288990);
-    redirectJump(&writeSaveFileHook, 0x2bab20);
-    redirectJump(&loadSaveHook, 0x289bb0);
-    redirectJump(&readSaveFileHook, 0x2bae90);
+    redirectJump(&_createSaveHook, 0x288990);
+    redirectJump(&_writeSaveFileHook, 0x2bab20);
+    redirectJump(&_loadSaveHook, 0x289bb0);
+    redirectJump(&_readSaveFileHook, 0x2bae90);
 
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 
