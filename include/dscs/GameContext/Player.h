@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 #include <vector>
-typedef int8_t undefined;
+typedef uint8_t undefined;
 
 namespace dscs
 {

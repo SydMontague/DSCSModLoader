@@ -1,11 +1,11 @@
 #pragma once
-#include "GameContext.h"
 
 #include <stdint.h>
 
 #include <map>
 #include <vector>
-typedef int8_t undefined;
+
+typedef uint8_t undefined;
 
 namespace dscs
 {
@@ -66,11 +66,11 @@ namespace dscs
         void** destroy;
 
     public:
-        std::vector<DigilineEntry> unk1;
-        std::vector<DigilineEntry> unk2;
-        std::vector<DigilineEntry> unk3;
+        std::vector<DigilineEntry*> unk1;
+        std::vector<DigilineEntry*> unk2;
+        std::vector<DigilineEntry*> unk3;
         std::vector<uint32_t> field4_0x50;
-        std::vector<DigilineEntry2> field5_0x68;
+        std::vector<DigilineEntry2*> field5_0x68;
         undefined field6_0x80;
         undefined field7_0x81;
         undefined field8_0x82;

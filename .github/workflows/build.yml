@@ -11,7 +11,7 @@ jobs:
     steps:
 
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Cache
       uses: actions/cache@v3
@@ -31,7 +31,7 @@ jobs:
         cmake --build . --config Release
 
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.2
+      uses: actions/upload-artifact@v3
       with:
         name: Package
         path: ${{ github.workspace }}/Release/

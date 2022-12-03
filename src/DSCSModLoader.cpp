@@ -1,17 +1,24 @@
 ﻿#include "DSCSModLoader.h"
 
+#include "CoSave.h"
+#include "CoSaveExtension.hpp"
 #include "ScriptExtension.h"
 #include "dscs/GameInterface.h"
+#include "dscs/Savegame.h"
 #include "modloader/plugin.h"
 #include "modloader/utils.h"
 
 #include <Windows.h>
+#include <stdio.h>
 
+#include <algorithm>
 #include <cstdarg>
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <list>
 #include <map>
+#include <ranges>
 #include <vector>
 
 // force Windows 7 WINAPI, so Boost::log works. Seems like a Boost bug
@@ -55,6 +62,17 @@ void initializeLogging()
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
 }
 
+void Test(HSQUIRRELVM vm)
+{
+    std::map<int32_t, dscs::SeenData*>* data = dscs::getSeenData();
+
+    for (auto& seenData : *data)
+        std::cout << seenData.second->entryId << " " << seenData.second->seenState << " " << seenData.second->field2_0x6
+                  << std::endl;
+
+    data->at(9)->seenState = 0;
+}
+
 void DebugLog(HSQUIRRELVM vm, const SQChar* msg) { sq_getprintfunc(vm)(vm, msg); }
 
 void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
@@ -70,6 +88,7 @@ void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
 class DSCSModLoaderImpl : public DSCSModLoader
 {
 private:
+    CoSaveImpl coSave;
     std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
     std::vector<BasePlugin*> plugins;
 
@@ -87,11 +106,17 @@ public:
 
     void addSquirrelFunction(const std::string& table, const std::string& name, void** functionPtr, SQFUNCTION closure);
     void addSquirrelFunction(const std::string& table, const std::string& name, SquirrelFunction data);
+    void addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write);
 
     // static functions to be used as function pointers
 private:
     static void _squirrelInit(HSQUIRRELVM vm);
     static void _archiveListInit();
+    static void _readSaveFileHook();
+    static void _writeSaveFileHook();
+    static void _loadSaveHook(void* empty, dscs::Savegame& save);
+    static void _createSaveHook(void* empty, dscs::Savegame& save);
+
     static DSCSModLoaderImpl instance;
 
 public:
@@ -101,8 +126,19 @@ public:
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 
 void DSCSModLoaderImpl::_squirrelInit(HSQUIRRELVM vm) { instance.squirrelInit(vm); }
-
 void DSCSModLoaderImpl::_archiveListInit() { instance.archiveListInit(); }
+void DSCSModLoaderImpl::_readSaveFileHook() { instance.coSave.readSaveFileHook(); }
+void DSCSModLoaderImpl::_writeSaveFileHook() { instance.coSave.writeSaveFileHook(); }
+void DSCSModLoaderImpl::_loadSaveHook(void* empty, dscs::Savegame& save) { instance.coSave.loadSaveHook(empty, save); }
+void DSCSModLoaderImpl::_createSaveHook(void* empty, dscs::Savegame& save)
+{
+    instance.coSave.createSaveHook(empty, save);
+};
+
+void DSCSModLoaderImpl::addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write)
+{
+    coSave.addCoSaveHook(name, read, write);
+}
 
 void DSCSModLoaderImpl::archiveListInit()
 {
@@ -331,6 +367,9 @@ void DSCSModLoaderImpl::init()
 
     // script extensions start
     addSquirrelFunction("Debug", "Log", SQUIRREL_AWAY(DebugLog));
+
+    addSquirrelFunction("Debug", "Test", SQUIRREL_AWAY(Test));
+
     addSquirrelFunction("Digimon", "GetScan", SQUIRREL_AWAY(dscs::digimon::GetScan));
     addSquirrelFunction("Digimon", "AddScan", SQUIRREL_AWAY(dscs::digimon::AddScan));
     addSquirrelFunction("Digimon", "SetScan", SQUIRREL_AWAY(dscs::digimon::SetScan));
@@ -338,6 +377,16 @@ void DSCSModLoaderImpl::init()
 
     redirectCall(&_archiveListInit, 0x2CF1BA);
     redirectJump(getBaseOffset() + 0x2CF2F1, 0x2CF1C6);
+
+    // custom save/load
+    redirectJump(&_createSaveHook, 0x288990);
+    redirectJump(&_writeSaveFileHook, 0x2bab20);
+    redirectJump(&_loadSaveHook, 0x289bb0);
+    redirectJump(&_readSaveFileHook, 0x2bae90);
+
+    addCoSaveHook("scanDataCS", readScanDataCS, writeScanDataCS);
+    addCoSaveHook("scanDataHM", readScanDataHM, writeScanDataHM);
+    addCoSaveHook("seenData", readSeenData, writeSeenData);
 
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 

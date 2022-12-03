@@ -1,14 +1,18 @@
 #pragma once
 
 #include <stdint.h>
+
 #include <map>
 #include <vector>
 
-
-typedef int8_t undefined;
+typedef uint8_t undefined;
 
 namespace dscs
 {
+    // forward declaration
+    struct BankSaveEntry;
+    struct FarmSaveEntry;
+
     struct DigimonMove
     {
         uint32_t type;
@@ -27,7 +31,7 @@ namespace dscs
         undefined field1_0x1;
         undefined field2_0x2;
         undefined field3_0x3;
-        uint32_t digimonId; 
+        uint32_t digimonId;
         undefined field5_0x8;
         undefined field6_0x9;
         undefined field7_0xa;
@@ -40,7 +44,7 @@ namespace dscs
         undefined field14_0x11;
         undefined field15_0x12;
         undefined field16_0x13;
-        char name[72]; 
+        char name[72];
         int16_t memoryCost;
         undefined field19_0x5e;
         undefined field20_0x5f;
@@ -69,8 +73,8 @@ namespace dscs
         undefined field43_0x86;
         undefined field44_0x87;
         uint32_t currentSP;
-        uint32_t baseSP;    
-        uint16_t trainedSP; 
+        uint32_t baseSP;
+        uint16_t trainedSP;
         uint16_t baseOff;
         uint16_t trainedATK;
         uint16_t baseDef;
@@ -427,7 +431,8 @@ namespace dscs
         undefined field406_0x233;
     };
 
-    struct PartyEntry {
+    struct PartyEntry
+    {
         bool isFilled;
         undefined field1_0x1;
         undefined field2_0x2;
@@ -436,11 +441,20 @@ namespace dscs
         uint32_t field5_0x8;
         uint32_t field6_0xc;
         Digimon* digimonPtr;
+
+        PartyEntry& operator=(const BankSaveEntry& entry);
+
+        PartyEntry& operator=(const BankSaveEntry* entry);
+
+        PartyEntry& operator=(const FarmSaveEntry& entry);
+
+        PartyEntry& operator=(const FarmSaveEntry* entry);
     };
 
-    struct DigimonContext {
-        void * * functions;
-        std::map<int,ScanData> scanData;
+    struct DigimonContext
+    {
+        void** functions;
+        std::map<int, ScanData*> scanData;
         int32_t bankSize;
         undefined pad1[4];
         std::vector<PartyEntry*> bank;

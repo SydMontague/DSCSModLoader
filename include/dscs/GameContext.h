@@ -3,10 +3,10 @@
 #include "GameContext/Inventory.h"
 #include "GameContext/Settings.h"
 #include "GameContext/Player.h"
-#include "GameContext/Context0x18.h"
+#include "GameContext/DigiFarm.h"
 #include "GameContext/Quest.h"
 #include "GameContext/Digiline.h"
-#include "GameContext/Context0x58.h"
+#include "GameContext/OnlineBattleBox.h"
 #include "GameContext/UserStats.h"
 
 #include <stdint.h>
@@ -18,6 +18,13 @@ typedef uint8_t undefined;
 
 namespace dscs
 {
+    struct SeenData
+    {
+        uint32_t entryId;
+        uint16_t seenState;
+        uint16_t field2_0x6;
+    };
+
     enum class StoryModeEnum
     {
         CYBER_SLEUTH   = 0,
@@ -64,7 +71,7 @@ namespace dscs
     public:
         FlagArray* flags;
         DigimonContext* digimonCS;
-        GameContext_0x18* unk0x18_CS;
+        DigiFarm* digiFarmCS;
         Inventory* inventoryCS;
         Workspace* work;
         PlayerStruct* playerCS;
@@ -72,9 +79,9 @@ namespace dscs
         DigilineStruct* digilineCS;
         Settings* settings;
         UserStats* stats;
-        GameContext_0x58* unk0x58;
+        OnlineBattleBox* battleBox;
         DigimonContext* digimonHM;
-        GameContext_0x18* unk0x18_HM;
+        DigiFarm* digiFarmHM;
         Inventory* inventoryHM;
         PlayerStruct* playerHM;
         QuestsStruct* questsHM;
