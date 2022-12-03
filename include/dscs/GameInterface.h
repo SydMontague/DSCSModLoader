@@ -38,8 +38,27 @@ namespace mediavision
     {
         struct ReadHandle
         {
-            uint8_t* buffer;
-            uint32_t size;
+            uint8_t* buffer = NULL;
+            uint32_t size   = 0;
+
+            ReadHandle(uint8_t* buffer = NULL, uint32_t size = 0)
+                : buffer(buffer)
+                , size(size)
+            {
+            }
+
+            ReadHandle(const ReadHandle& other) = delete;
+
+            ReadHandle(ReadHandle&& other) noexcept
+            {
+                uint8_t* tmpBuffer = buffer;
+                buffer             = other.buffer;
+                other.buffer       = tmpBuffer;
+
+                uint32_t tmpSize = size;
+                size             = other.size;
+                other.size       = tmpSize;
+            }
 
             ~ReadHandle()
             {
@@ -48,6 +67,17 @@ namespace mediavision
                     delete buffer;
                     buffer = NULL;
                 }
+            }
+
+            ReadHandle& operator=(ReadHandle&& other) noexcept
+            {
+                uint8_t* tmpBuffer = buffer;
+                buffer             = other.buffer;
+                other.buffer       = tmpBuffer;
+
+                uint32_t tmpSize = size;
+                size             = other.size;
+                other.size       = tmpSize;
             }
         };
 

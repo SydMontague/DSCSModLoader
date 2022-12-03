@@ -1,11 +1,11 @@
 ﻿#include "DSCSModLoader.h"
 
+#include "CoSave.h"
 #include "ScriptExtension.h"
 #include "dscs/GameInterface.h"
 #include "dscs/Savegame.h"
 #include "modloader/plugin.h"
 #include "modloader/utils.h"
-#include "CoSave.h"
 
 #include <Windows.h>
 #include <stdio.h>
@@ -98,6 +98,7 @@ private:
     void init();
     void squirrelInit(HSQUIRRELVM);
     void archiveListInit();
+
 public:
     DSCSModLoaderImpl(const DSCSModLoaderImpl&) = delete;
     void operator=(const DSCSModLoaderImpl&)    = delete;
@@ -128,21 +129,57 @@ void DSCSModLoaderImpl::_archiveListInit() { instance.archiveListInit(); }
 void DSCSModLoaderImpl::_readSaveFileHook() { instance.coSave.readSaveFileHook(); }
 void DSCSModLoaderImpl::_writeSaveFileHook() { instance.coSave.writeSaveFileHook(); }
 void DSCSModLoaderImpl::_loadSaveHook(void* empty, dscs::Savegame& save) { instance.coSave.loadSaveHook(empty, save); }
-void DSCSModLoaderImpl::_createSaveHook(void* empty, dscs::Savegame& save) { instance.coSave.createSaveHook(empty, save); };
+void DSCSModLoaderImpl::_createSaveHook(void* empty, dscs::Savegame& save)
+{
+    instance.coSave.createSaveHook(empty, save);
+};
 
 void DSCSModLoaderImpl::addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write)
 {
     coSave.addCoSaveHook(name, read, write);
 }
 
-void readScanData(std::vector<uint8_t> data) {}
+void readScanData(std::vector<uint8_t> data, bool isHM)
+{
+    struct LocalScanData
+    {
+        std::size_t size;
+        dscs::ScanData data[0];
+    };
 
-std::vector<uint8_t> writeScanData()
+    auto context             = dscs::getGameContext();
+    auto digimon             = isHM ? context->digimonHM : context->digimonHM;
+    auto scanDataCS          = digimon->scanData;
+    LocalScanData* localData = reinterpret_cast<LocalScanData*>(data.data());
+
+    for (std::size_t i = 0; i < localData->size; i++)
+    {
+        auto& scanEntry = localData->data[i];
+        if (scanEntry.digimonId != 0) dscs::setScanData(digimon, scanEntry.digimonId, scanEntry.scanrate);
+    }
+}
+
+std::vector<uint8_t> writeScanData(bool isHM)
 {
     std::vector<uint8_t> data;
+    auto context     = dscs::getGameContext();
+    auto digimon     = isHM ? context->digimonHM : context->digimonHM;
+    auto scanDataCS  = digimon->scanData;
+    std::size_t size = scanDataCS.size();
+
+    std::copy_n(reinterpret_cast<uint8_t*>(&size), sizeof(size), std::back_inserter(data));
+
+    for (auto& entry : scanDataCS)
+        std::copy_n(reinterpret_cast<uint8_t*>(entry.second), sizeof(*entry.second), std::back_inserter(data));
 
     return data;
 }
+
+std::vector<uint8_t> writeScanDataCS() { return writeScanData(false); }
+std::vector<uint8_t> writeScanDataHM() { return writeScanData(true); }
+
+void readScanDataCS(std::vector<uint8_t> data) { readScanData(data, false); }
+void readScanDataHM(std::vector<uint8_t> data) { readScanData(data, true); }
 
 void DSCSModLoaderImpl::archiveListInit()
 {
@@ -387,6 +424,9 @@ void DSCSModLoaderImpl::init()
     redirectJump(&_writeSaveFileHook, 0x2bab20);
     redirectJump(&_loadSaveHook, 0x289bb0);
     redirectJump(&_readSaveFileHook, 0x2bae90);
+
+    addCoSaveHook("scanDataCS", readScanDataCS, writeScanDataCS);
+    addCoSaveHook("scanDataHM", readScanDataHM, writeScanDataHM);
 
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 

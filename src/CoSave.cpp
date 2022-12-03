@@ -6,13 +6,6 @@
 #include <filesystem>
 #include <format>
 
-static void readSaveFile();
-static void writeSaveFile();
-static void loadStorySave(dscs::StorySave& save, bool isHM);
-static void loadSave(void* empty, dscs::Savegame& save);
-static void createStorySave(dscs::StorySave& save, bool isHM);
-static void createSave(void* empty, dscs::Savegame& save);
-
 struct CoSaveContainer
 {
     uint32_t size;
@@ -34,6 +27,24 @@ void CoSaveImpl::addCoSaveHook(std::string name, CoSaveReadCallback read, CoSave
     coSaveCallbacks.emplace(name, std::make_pair(read, write));
 }
 
+void CoSaveImpl::createCoSave()
+{
+    rawContainer.clear();
+
+    for (auto& entry : coSaveCallbacks)
+        rawContainer[entry.first] = entry.second.second();
+}
+
+void CoSaveImpl::loadCoSave()
+{
+    for (auto& entry : rawContainer)
+    {
+        if (coSaveCallbacks.find(entry.first) == coSaveCallbacks.end()) continue;
+
+        coSaveCallbacks[entry.first].first(entry.second);
+    }
+}
+
 bool CoSaveImpl::readCoSave()
 {
     auto gameSaveData = dscs::getGameSaveData();
@@ -43,21 +54,23 @@ bool CoSaveImpl::readCoSave()
 
     rawContainer.clear();
     dscs::getSaveDirPath(saveDirPath);
-    auto gameFile = std::format("{}cosave_{:04}.bin", saveDirPath, saveSlot);
-    const std::filesystem::path path(gameFile);
+    const std::string gameFile = std::format("{}cosave_{:0>4}.bin", saveDirPath, saveSlot);
 
-    if (!std::filesystem::exists(path)) return true;
+    if (!std::filesystem::exists(gameFile)) return true;
     if (mediavision::vfs::readFile(gameFile.c_str(), &handle) == 0) return false;
     if (handle.size == 0) return true;
 
-    CoSave header = *reinterpret_cast<CoSave*>(handle.buffer);
-    for (int32_t i = 0; i < header.containerCount; i++)
+    CoSave* header = reinterpret_cast<CoSave*>(handle.buffer);
+
+    if (header->magic != 'DSCS') return false;
+
+    for (int32_t i = 0; i < header->containerCount; i++)
     {
-        CoSaveContainer container = header.container[i];
+        CoSaveContainer container = header->container[i];
         std::string str(container.name);
+
         std::vector<uint8_t> data;
-        data.resize(container.size);
-        std::copy(handle.buffer + container.offset, handle.buffer + container.offset + container.size, data.begin());
+        std::copy_n(handle.buffer + container.offset, container.size, std::back_inserter(data));
         rawContainer[str] = data;
     }
 
@@ -77,13 +90,43 @@ bool CoSaveImpl::writeCoSave()
     mediavision::vfs::deleteFile(gameFile.c_str());
 
     std::vector<uint8_t> data;
+    std::vector<uint8_t> containerData;
     CoSave save;
     save.magic          = 'DSCS';
     save.version        = 1;
     save.containerCount = rawContainer.size();
-    save.reserved = 0;
+    save.reserved       = 0;
 
-    std::copy(reinterpret_cast<uint8_t*>(&save), reinterpret_cast<uint8_t*>(&save) + sizeof(save), std::back_inserter(data));
+    std::size_t dataStart = sizeof(save) + save.containerCount * sizeof(CoSaveContainer);
+
+    std::copy(reinterpret_cast<uint8_t*>(&save),
+              reinterpret_cast<uint8_t*>(&save) + sizeof(save),
+              std::back_inserter(data));
+
+    for (auto& container : rawContainer)
+    {
+        CoSaveContainer tmp{};
+
+        std::copy_n(container.first.begin(),
+                    std::min(container.first.size(), sizeof(tmp.name) - 1),
+                    std::begin(tmp.name));
+        tmp.name[sizeof(tmp.name) - 1] = '\0';
+
+        tmp.size   = container.second.size();
+        tmp.offset = dataStart;
+
+        std::copy_n(reinterpret_cast<uint8_t*>(&tmp), sizeof(tmp), std::back_inserter(data));
+
+        std::copy(container.second.begin(), container.second.end(), std::back_inserter(containerData));
+
+        auto containerSize = containerData.size() + ((0x10 - (containerData.size() % 0x10)) % 0x10);
+        containerData.resize(containerSize);
+
+        dataStart += tmp.size;
+        dataStart += ((0x10 - (dataStart % 0x10)) % 0x10);
+    }
+
+    std::copy(containerData.begin(), containerData.end(), std::back_inserter(data));
 
     if (mediavision::vfs::writeFile(gameFile.c_str(), data.data(), data.size()) == 0) return false;
 
@@ -107,8 +150,8 @@ void CoSaveImpl::writeSaveFileHook()
 {
     auto gameSaveData = dscs::getGameSaveData();
 
-    if(writeCoSave())
-        writeSaveFile(); 
+    if (writeCoSave())
+        writeSaveFile();
     else
         gameSaveData->saveResponseCode = 5;
 
@@ -116,15 +159,15 @@ void CoSaveImpl::writeSaveFileHook()
     dscs::endThread(0);
 }
 
-void CoSaveImpl::loadSaveHook(void* empty, dscs::Savegame& save) { loadSave(empty, save); }
-
-void CoSaveImpl::createCoSave() {
-    rawContainer.clear();
+void CoSaveImpl::loadSaveHook(void* empty, dscs::Savegame& save)
+{
+    loadSave(empty, save);
+    loadCoSave();
 }
 
 void CoSaveImpl::createSaveHook(void* empty, dscs::Savegame& save)
-{ 
-    createSave(empty, save); 
+{
+    createSave(empty, save);
     createCoSave();
 }
 

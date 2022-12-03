@@ -10,15 +10,17 @@ private:
     std::map<std::string, std::pair<CoSaveReadCallback, CoSaveWriteCallback>> coSaveCallbacks;
 
 public:
+    void addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write);
+
     void readSaveFileHook();
     void writeSaveFileHook();
     void loadSaveHook(void* empty, dscs::Savegame& save);
     void createSaveHook(void* empty, dscs::Savegame& save);
-    void addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write);
 
 private:
-    bool writeCoSave();
+    void loadCoSave();
     void createCoSave();
+    bool writeCoSave();
     bool readCoSave();
     void writeSaveFile();
     void readSaveFile();
