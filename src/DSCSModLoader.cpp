@@ -1,6 +1,7 @@
 ﻿#include "DSCSModLoader.h"
 
 #include "CoSave.h"
+#include "CoSaveExtension.hpp"
 #include "ScriptExtension.h"
 #include "dscs/GameInterface.h"
 #include "dscs/Savegame.h"
@@ -138,48 +139,6 @@ void DSCSModLoaderImpl::addCoSaveHook(std::string name, CoSaveReadCallback read,
 {
     coSave.addCoSaveHook(name, read, write);
 }
-
-void readScanData(std::vector<uint8_t> data, bool isHM)
-{
-    struct LocalScanData
-    {
-        std::size_t size;
-        dscs::ScanData data[0];
-    };
-
-    auto context             = dscs::getGameContext();
-    auto digimon             = isHM ? context->digimonHM : context->digimonHM;
-    auto scanDataCS          = digimon->scanData;
-    LocalScanData* localData = reinterpret_cast<LocalScanData*>(data.data());
-
-    for (std::size_t i = 0; i < localData->size; i++)
-    {
-        auto& scanEntry = localData->data[i];
-        if (scanEntry.digimonId != 0) dscs::setScanData(digimon, scanEntry.digimonId, scanEntry.scanrate);
-    }
-}
-
-std::vector<uint8_t> writeScanData(bool isHM)
-{
-    std::vector<uint8_t> data;
-    auto context     = dscs::getGameContext();
-    auto digimon     = isHM ? context->digimonHM : context->digimonHM;
-    auto scanDataCS  = digimon->scanData;
-    std::size_t size = scanDataCS.size();
-
-    std::copy_n(reinterpret_cast<uint8_t*>(&size), sizeof(size), std::back_inserter(data));
-
-    for (auto& entry : scanDataCS)
-        std::copy_n(reinterpret_cast<uint8_t*>(entry.second), sizeof(*entry.second), std::back_inserter(data));
-
-    return data;
-}
-
-std::vector<uint8_t> writeScanDataCS() { return writeScanData(false); }
-std::vector<uint8_t> writeScanDataHM() { return writeScanData(true); }
-
-void readScanDataCS(std::vector<uint8_t> data) { readScanData(data, false); }
-void readScanDataHM(std::vector<uint8_t> data) { readScanData(data, true); }
 
 void DSCSModLoaderImpl::archiveListInit()
 {
@@ -427,6 +386,7 @@ void DSCSModLoaderImpl::init()
 
     addCoSaveHook("scanDataCS", readScanDataCS, writeScanDataCS);
     addCoSaveHook("scanDataHM", readScanDataHM, writeScanDataHM);
+    addCoSaveHook("seenData", readSeenData, writeSeenData);
 
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 
