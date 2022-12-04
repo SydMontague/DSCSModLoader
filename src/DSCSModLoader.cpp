@@ -388,19 +388,34 @@ void DSCSModLoaderImpl::init()
     addCoSaveHook("scanDataHM", readScanDataHM, writeScanDataHM);
     addCoSaveHook("seenData", readSeenData, writeSeenData);
 
-    BOOST_LOG_TRIVIAL(info) << "Loading patches...";
 
     // loading and applying patch files
-    std::filesystem::directory_iterator patches("patches");
-    for (auto patch : patches)
-        if (patch.is_regular_file()) applyPatchFile(patch.path());
-
-    BOOST_LOG_TRIVIAL(info) << "Loading plugins...";
+    BOOST_LOG_TRIVIAL(info) << "Loading patches...";
+    std::filesystem::path patches_path("patches");
+    if (std::filesystem::exists(patches_path))
+    {
+        std::filesystem::directory_iterator patches(patches_path);
+        for (auto patch : patches)
+            if (patch.is_regular_file()) applyPatchFile(patch.path());
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(info) << "Patches directory not found, skipping.";
+    }
 
     // loading plugins
-    std::filesystem::directory_iterator plugins("plugins");
-    for (auto plugin : plugins)
-        if (plugin.is_regular_file()) loadPlugin(plugin.path());
+    BOOST_LOG_TRIVIAL(info) << "Loading plugins...";
+    std::filesystem::path plugins_path("plugins");
+    if (std::filesystem::exists(patches_path))
+    {
+        std::filesystem::directory_iterator plugins(plugins_path);
+        for (auto plugin : plugins)
+            if (plugin.is_regular_file()) loadPlugin(plugin.path());
+    }
+    else
+    {
+        BOOST_LOG_TRIVIAL(info) << "Plugins directory not found, skipping.";
+    }
 
     BOOST_LOG_TRIVIAL(info) << "DSCSModLoader initialized!";
 }
