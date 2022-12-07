@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <functional>
 
 // forward declarations
 struct Version;
@@ -15,8 +16,8 @@ class BasePlugin;
 using EnableFunction    = void (*)();
 using GetPluginFunction = BasePlugin* (*)(DSCSModLoader*);
 
-using CoSaveReadCallback  = void (*)(std::vector<uint8_t>);
-using CoSaveWriteCallback = std::vector<uint8_t> (*)();
+using CoSaveReadCallback  = std::function<void(std::vector<uint8_t>)>;
+using CoSaveWriteCallback = std::function<std::vector<uint8_t>()>;
 
 typedef struct Version
 {
@@ -35,7 +36,7 @@ struct PluginInfo
 class BasePlugin
 {
 public:
-    BasePlugin(DSCSModLoader* modLoader)
+    BasePlugin(DSCSModLoader& modLoader)
         : modLoader(modLoader){};
     ~BasePlugin() = default;
 
@@ -44,7 +45,7 @@ public:
 
     const virtual PluginInfo getPluginInfo() = 0;
 
-    DSCSModLoader* modLoader;
+    DSCSModLoader& modLoader;
 };
 
 class DSCSModLoader

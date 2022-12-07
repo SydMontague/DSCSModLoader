@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <iterator>
 #include <list>
 #include <map>
 #include <ranges>
@@ -85,12 +86,84 @@ void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
     BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
 }
 
+class FlagTable
+{
+private:
+    char name[0x20]{ 0 };
+    std::array<uint32_t, 0x20> flags{ 0 }; // 1024 flags
+
+public:
+    FlagTable(std::string name)
+    {
+        std::copy_n(name.begin(), min(name.length(), sizeof(name) - 1), std::begin(name));
+        name[sizeof(name) - 1] = '\0';
+    }
+
+    auto getName() { return name; }
+
+    bool get(uint32_t flag)
+    {
+        if (flag >= (flags.size() >> 5)) return false;
+        return (flags[flag >> 5] >> (flag & 0x1F) & 1) != 0;
+    }
+    void clear(uint32_t flag)
+    {
+        if (flag >= (flags.size() >> 5)) return;
+        flags[flag >> 5] &= ~(1 << (flag & 0x1F));
+    }
+    void set(uint32_t flag)
+    {
+        if (flag >= (flags.size() >> 5)) return;
+        flags[flag >> 5] |= (1 << (flag & 0x1F));
+    }
+};
+
+class WorkTable
+{
+private:
+    char name[0x20]{ 0 };
+    std::array<int32_t, 256> data{ 0 };
+
+public:
+    WorkTable(std::string name)
+    {
+        std::copy_n(name.begin(), min(name.length(), sizeof(name) - 1), std::begin(name));
+        name[sizeof(name) - 1] = '\0';
+    }
+
+    auto getName() { return name; }
+
+    int32_t getInt(uint32_t id)
+    {
+        if (id > data.size()) return 0;
+        return data[id];
+    }
+    float getFloat(uint32_t id)
+    {
+        if (id > data.size()) return 0;
+        return reinterpret_cast<float&>(data[id]);
+    }
+    void setInt(uint32_t id, int32_t value)
+    {
+        if (id > data.size()) return;
+        data[id] = value;
+    }
+    void setFloat(uint32_t id, float value)
+    {
+        if (id > data.size()) return;
+        data[id] = reinterpret_cast<int32_t&>(value);
+    }
+};
+
 class DSCSModLoaderImpl : public DSCSModLoader
 {
 private:
     CoSaveImpl coSave;
     std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
     std::vector<BasePlugin*> plugins;
+
+    std::map<std::string, FlagTable> flagTables;
+    std::map<std::string, WorkTable> workTables;
 
     DSCSModLoaderImpl(){};
 
@@ -100,6 +173,11 @@ private:
     void squirrelInit(HSQUIRRELVM);
     void archiveListInit();
 
+    std::vector<uint8_t> writeFlagTables();
+    void readFlagTables(std::vector<uint8_t>);
+    std::vector<uint8_t> writeWorkTables();
+    void readWorkTables(std::vector<uint8_t>);
+
 public:
     DSCSModLoaderImpl(const DSCSModLoaderImpl&) = delete;
     void operator=(const DSCSModLoaderImpl&)    = delete;
@@ -107,6 +185,9 @@ public:
     void addSquirrelFunction(const std::string& table, const std::string& name, void** functionPtr, SQFUNCTION closure);
     void addSquirrelFunction(const std::string& table, const std::string& name, SquirrelFunction data);
     void addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write);
+
+    FlagTable& getFlagTable(std::string& name);
+    WorkTable& getWorkTable(std::string& name);
 
     // static functions to be used as function pointers
 private:
@@ -124,6 +205,56 @@ public:
 };
 
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
+
+std::vector<uint8_t> DSCSModLoaderImpl::writeFlagTables()
+{
+    std::vector<uint8_t> data;
+
+    for (auto& entry : flagTables)
+        std::copy_n(reinterpret_cast<uint8_t*>(&entry.second), sizeof(entry.second), std::back_inserter(data));
+
+    return data;
+}
+
+void DSCSModLoaderImpl::readFlagTables(std::vector<uint8_t> data)
+{
+    std::size_t entryCount = data.size() / sizeof(FlagTable);
+    FlagTable* itr         = reinterpret_cast<FlagTable*>(data.data());
+
+    for (int32_t i = 0; i < entryCount; i++)
+        flagTables.insert(std::make_pair(std::string(itr->getName()), *itr));
+}
+
+std::vector<uint8_t> DSCSModLoaderImpl::writeWorkTables()
+{
+    std::vector<uint8_t> data;
+
+    for (auto& entry : workTables)
+        std::copy_n(reinterpret_cast<uint8_t*>(&entry.second), sizeof(entry.second), std::back_inserter(data));
+
+    return data;
+}
+
+void DSCSModLoaderImpl::readWorkTables(std::vector<uint8_t> data)
+{
+    std::size_t entryCount = data.size() / sizeof(FlagTable);
+    WorkTable* itr         = reinterpret_cast<WorkTable*>(data.data());
+
+    for (int32_t i = 0; i < entryCount; i++)
+        workTables.insert(std::make_pair(std::string(itr->getName()), *itr));
+}
+
+FlagTable& DSCSModLoaderImpl::getFlagTable(std::string& name)
+{
+    if (name.length() >= 0x20) name = name.substr(0, 0x1F);
+    return flagTables.emplace(name, name).first->second;
+}
+
+WorkTable& DSCSModLoaderImpl::getWorkTable(std::string& name)
+{
+    if (name.length() >= 0x20) name = name.substr(0, 0x1F);
+    return workTables.emplace(name, name).first->second;
+}
 
 void DSCSModLoaderImpl::_squirrelInit(HSQUIRRELVM vm) { instance.squirrelInit(vm); }
 void DSCSModLoaderImpl::_archiveListInit() { instance.archiveListInit(); }
@@ -388,6 +519,15 @@ void DSCSModLoaderImpl::init()
     addCoSaveHook("scanDataHM", readScanDataHM, writeScanDataHM);
     addCoSaveHook("seenData", readSeenData, writeSeenData);
 
+    addCoSaveHook(
+        "customFlags",
+        [this](auto data) { readFlagTables(data); },
+        [this] { return writeFlagTables(); });
+
+    addCoSaveHook(
+        "customWork",
+        [this](auto data) { readWorkTables(data); },
+        [this] { return writeWorkTables(); });
 
     // loading and applying patch files
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
