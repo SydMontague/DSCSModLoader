@@ -86,75 +86,6 @@ void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
     BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
 }
 
-class FlagTable
-{
-private:
-    char name[0x20]{ 0 };
-    std::array<uint32_t, 0x20> flags{ 0 }; // 1024 flags
-
-public:
-    FlagTable(std::string name)
-    {
-        std::copy_n(name.begin(), min(name.length(), sizeof(name) - 1), std::begin(name));
-        name[sizeof(name) - 1] = '\0';
-    }
-
-    auto getName() { return name; }
-
-    bool get(uint32_t flag)
-    {
-        if (flag >= (flags.size() >> 5)) return false;
-        return (flags[flag >> 5] >> (flag & 0x1F) & 1) != 0;
-    }
-    void clear(uint32_t flag)
-    {
-        if (flag >= (flags.size() >> 5)) return;
-        flags[flag >> 5] &= ~(1 << (flag & 0x1F));
-    }
-    void set(uint32_t flag)
-    {
-        if (flag >= (flags.size() >> 5)) return;
-        flags[flag >> 5] |= (1 << (flag & 0x1F));
-    }
-};
-
-class WorkTable
-{
-private:
-    char name[0x20]{ 0 };
-    std::array<int32_t, 256> data{ 0 };
-
-public:
-    WorkTable(std::string name)
-    {
-        std::copy_n(name.begin(), min(name.length(), sizeof(name) - 1), std::begin(name));
-        name[sizeof(name) - 1] = '\0';
-    }
-
-    auto getName() { return name; }
-
-    int32_t getInt(uint32_t id)
-    {
-        if (id > data.size()) return 0;
-        return data[id];
-    }
-    float getFloat(uint32_t id)
-    {
-        if (id > data.size()) return 0;
-        return reinterpret_cast<float&>(data[id]);
-    }
-    void setInt(uint32_t id, int32_t value)
-    {
-        if (id > data.size()) return;
-        data[id] = value;
-    }
-    void setFloat(uint32_t id, float value)
-    {
-        if (id > data.size()) return;
-        data[id] = reinterpret_cast<int32_t&>(value);
-    }
-};
-
 class DSCSModLoaderImpl : public DSCSModLoader
 {
 private:
@@ -198,13 +129,14 @@ private:
     static void _loadSaveHook(void* empty, dscs::Savegame& save);
     static void _createSaveHook(void* empty, dscs::Savegame& save);
 
-    static DSCSModLoaderImpl instance;
-
 public:
+    static DSCSModLoaderImpl instance;
     static bool bootstrap();
 };
 
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
+
+DSCSModLoader& DSCSModLoader::getInstance() { return DSCSModLoaderImpl::instance; }
 
 std::vector<uint8_t> DSCSModLoaderImpl::writeFlagTables()
 {
@@ -504,7 +436,16 @@ void DSCSModLoaderImpl::init()
     addSquirrelFunction("Digimon", "GetScan", SQUIRREL_AWAY(dscs::digimon::GetScan));
     addSquirrelFunction("Digimon", "AddScan", SQUIRREL_AWAY(dscs::digimon::AddScan));
     addSquirrelFunction("Digimon", "SetScan", SQUIRREL_AWAY(dscs::digimon::SetScan));
-    // script extensions end
+
+    addSquirrelFunction("ModLoader", "SetFlag", SQUIRREL_AWAY(dscs::modloader::SetFlag));
+    addSquirrelFunction("ModLoader", "GetFlag", SQUIRREL_AWAY(dscs::modloader::GetFlag));
+    addSquirrelFunction("ModLoader", "ClearFlag", SQUIRREL_AWAY(dscs::modloader::ClearFlag));
+
+    addSquirrelFunction("ModLoader", "StorageSetInt", SQUIRREL_AWAY(dscs::modloader::StorageSetInt));
+    addSquirrelFunction("ModLoader", "StorageSetFloat", SQUIRREL_AWAY(dscs::modloader::StorageSetFloat));
+    addSquirrelFunction("ModLoader", "StorageGetInt", SQUIRREL_AWAY(dscs::modloader::StorageGetInt));
+    addSquirrelFunction("ModLoader", "StorageGetFloat", SQUIRREL_AWAY(dscs::modloader::StorageGetFloat));
+    //  script extensions end
 
     redirectCall(&_archiveListInit, 0x2CF1BA);
     redirectJump(getBaseOffset() + 0x2CF2F1, 0x2CF1C6);
@@ -538,10 +479,7 @@ void DSCSModLoaderImpl::init()
         for (auto patch : patches)
             if (patch.is_regular_file()) applyPatchFile(patch.path());
     }
-    else
-    {
-        BOOST_LOG_TRIVIAL(info) << "Patches directory not found, skipping.";
-    }
+    else { BOOST_LOG_TRIVIAL(info) << "Patches directory not found, skipping."; }
 
     // loading plugins
     BOOST_LOG_TRIVIAL(info) << "Loading plugins...";
@@ -552,10 +490,7 @@ void DSCSModLoaderImpl::init()
         for (auto plugin : plugins)
             if (plugin.is_regular_file()) loadPlugin(plugin.path());
     }
-    else
-    {
-        BOOST_LOG_TRIVIAL(info) << "Plugins directory not found, skipping.";
-    }
+    else { BOOST_LOG_TRIVIAL(info) << "Plugins directory not found, skipping."; }
 
     BOOST_LOG_TRIVIAL(info) << "DSCSModLoader initialized!";
 }

@@ -1,11 +1,13 @@
 #pragma once
 
-#include <modloader/squirrel.h>
+#include "modloader/FlagTable.h"
+#include "modloader/WorkTable.h"
+#include "modloader/squirrel.h"
 
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 
 // forward declarations
 struct Version;
@@ -57,4 +59,10 @@ public:
     virtual void addSquirrelFunction(const std::string& table, const std::string& name, SquirrelFunction data)     = 0;
     virtual void
     addCoSaveHook(const std::string name, CoSaveReadCallback readCallback, CoSaveWriteCallback writeCallback) = 0;
+
+    virtual FlagTable& getFlagTable(std::string& name) = 0;
+    virtual WorkTable& getWorkTable(std::string& name) = 0;
+
+public:
+    static DSCSModLoader& getInstance();
 };

@@ -1,6 +1,7 @@
 #include "ScriptExtension.h"
 
 #include "dscs/GameInterface.h"
+#include "modloader/plugin.h"
 
 namespace dscs
 {
@@ -60,4 +61,31 @@ namespace dscs
             found->second->scanrate = (uint16_t)newScan;
         }
     } // namespace digimon
+
+    namespace modloader
+    {
+        void SetFlag(std::string name, int32_t flag) { DSCSModLoader::getInstance().getFlagTable(name).set(flag); }
+        bool GetFlag(std::string name, int32_t flag)
+        {
+            return DSCSModLoader::getInstance().getFlagTable(name).get(flag);
+        }
+        void ClearFlag(std::string name, int32_t flag) { DSCSModLoader::getInstance().getFlagTable(name).clear(flag); }
+
+        void StorageSetInt(std::string name, int32_t flag, int32_t value)
+        {
+            DSCSModLoader::getInstance().getWorkTable(name).setInt(flag, value);
+        }
+        void StorageSetFloat(std::string name, int32_t flag, float value)
+        {
+            DSCSModLoader::getInstance().getWorkTable(name).setFloat(flag, value);
+        }
+        int32_t StorageGetInt(std::string name, int32_t flag)
+        {
+            return DSCSModLoader::getInstance().getWorkTable(name).getInt(flag);
+        }
+        float StorageGetFloat(std::string name, int32_t flag)
+        {
+            return DSCSModLoader::getInstance().getWorkTable(name).getFloat(flag);
+        }
+    } // namespace modloader
 } // namespace dscs
