@@ -4,6 +4,8 @@
 #include <string>
 #include <algorithm>
 
+#include <iostream>
+
 class WorkTable
 {
 private:
@@ -11,9 +13,9 @@ private:
     std::array<int32_t, 256> data{ 0 };
 
 public:
-    WorkTable(std::string name)
+    WorkTable(std::string tableName)
     {
-        std::copy_n(name.begin(), std::min(name.length(), sizeof(name) - 1), std::begin(name));
+        std::copy_n(tableName.begin(), std::min(tableName.length(), sizeof(name) - 1), std::begin(name));
         name[sizeof(name) - 1] = '\0';
     }
 

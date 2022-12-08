@@ -153,6 +153,8 @@ void DSCSModLoaderImpl::readFlagTables(std::vector<uint8_t> data)
     std::size_t entryCount = data.size() / sizeof(FlagTable);
     FlagTable* itr         = reinterpret_cast<FlagTable*>(data.data());
 
+    flagTables.clear();
+
     for (int32_t i = 0; i < entryCount; i++)
         flagTables.insert(std::make_pair(std::string(itr->getName()), *itr));
 }
@@ -169,8 +171,10 @@ std::vector<uint8_t> DSCSModLoaderImpl::writeWorkTables()
 
 void DSCSModLoaderImpl::readWorkTables(std::vector<uint8_t> data)
 {
-    std::size_t entryCount = data.size() / sizeof(FlagTable);
+    std::size_t entryCount = data.size() / sizeof(WorkTable);
     WorkTable* itr         = reinterpret_cast<WorkTable*>(data.data());
+
+    workTables.clear();
 
     for (int32_t i = 0; i < entryCount; i++)
         workTables.insert(std::make_pair(std::string(itr->getName()), *itr));

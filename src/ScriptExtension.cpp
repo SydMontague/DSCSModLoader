@@ -64,28 +64,41 @@ namespace dscs
 
     namespace modloader
     {
-        void SetFlag(std::string name, int32_t flag) { DSCSModLoader::getInstance().getFlagTable(name).set(flag); }
-        bool GetFlag(std::string name, int32_t flag)
+        void SetFlag(const SQChar* name, int32_t flag)
         {
-            return DSCSModLoader::getInstance().getFlagTable(name).get(flag);
+            std::string string{ name };
+            DSCSModLoader::getInstance().getFlagTable(string).set(flag);
         }
-        void ClearFlag(std::string name, int32_t flag) { DSCSModLoader::getInstance().getFlagTable(name).clear(flag); }
+        bool GetFlag(const SQChar* name, int32_t flag)
+        {
+            std::string string{ name };
+            return DSCSModLoader::getInstance().getFlagTable(string).get(flag);
+        }
+        void ClearFlag(const SQChar* name, int32_t flag)
+        {
+            std::string string{ name };
+            DSCSModLoader::getInstance().getFlagTable(string).clear(flag);
+        }
 
-        void StorageSetInt(std::string name, int32_t flag, int32_t value)
+        void StorageSetInt(const SQChar* name, int32_t flag, int32_t value)
         {
-            DSCSModLoader::getInstance().getWorkTable(name).setInt(flag, value);
+            std::string string{ name };
+            DSCSModLoader::getInstance().getWorkTable(string).setInt(flag, value);
         }
-        void StorageSetFloat(std::string name, int32_t flag, float value)
+        void StorageSetFloat(const SQChar* name, int32_t flag, float value)
         {
-            DSCSModLoader::getInstance().getWorkTable(name).setFloat(flag, value);
+            std::string string{ name };
+            DSCSModLoader::getInstance().getWorkTable(string).setFloat(flag, value);
         }
-        int32_t StorageGetInt(std::string name, int32_t flag)
+        int32_t StorageGetInt(const SQChar* name, int32_t flag)
         {
-            return DSCSModLoader::getInstance().getWorkTable(name).getInt(flag);
+            std::string string{ name };
+            return DSCSModLoader::getInstance().getWorkTable(string).getInt(flag);
         }
-        float StorageGetFloat(std::string name, int32_t flag)
+        float StorageGetFloat(const SQChar* name, int32_t flag)
         {
-            return DSCSModLoader::getInstance().getWorkTable(name).getFloat(flag);
+            std::string string{ name };
+            return DSCSModLoader::getInstance().getWorkTable(string).getFloat(flag);
         }
     } // namespace modloader
 } // namespace dscs

@@ -37,12 +37,8 @@ void CoSaveImpl::createCoSave()
 
 void CoSaveImpl::loadCoSave()
 {
-    for (auto& entry : rawContainer)
-    {
-        if (coSaveCallbacks.find(entry.first) == coSaveCallbacks.end()) continue;
-
-        coSaveCallbacks[entry.first].first(entry.second);
-    }
+    for (auto& entry : coSaveCallbacks)
+        entry.second.first(rawContainer[entry.first]);
 }
 
 bool CoSaveImpl::readCoSave()
