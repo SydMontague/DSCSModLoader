@@ -77,6 +77,20 @@ namespace dscs
         return f(returnValue);
     }
 
+    extern __declspec(dllexport) char* getResourceDir()
+    {
+        using Func   = char* (*)(void);
+        const Func f = (Func)(getBaseOffset() + 0x4f8f60);
+        return f();
+    }
+
+    extern __declspec(dllexport) std::string getResourceDir(std::string* str)
+    {
+        using Func   = std::string (*)(std::string*);
+        const Func f = (Func)(getBaseOffset() + 0x5F70F0);
+        return f(str);
+    }
+
     FarmSaveEntry& FarmSaveEntry::operator=(const PartyEntry& entry)
     {
         this->isFilled   = entry.isFilled;
