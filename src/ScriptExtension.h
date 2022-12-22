@@ -24,5 +24,7 @@ namespace dscs
         void StorageSetFloat(const SQChar* name, int32_t flag, float value);
         int32_t StorageGetInt(const SQChar* name, int32_t flag);
         float StorageGetFloat(const SQChar* name, int32_t flag);
+
+        void DebugLog(HSQUIRRELVM vm, const SQChar* msg);
     } // namespace modloader
 } // namespace dscs

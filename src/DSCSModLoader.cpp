@@ -34,6 +34,7 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/file.hpp>
 
+/* Types */
 using PTR_SteamAPI_Init = bool (*)();
 PTR_SteamAPI_Init SteamAPI_Init;
 
@@ -50,41 +51,6 @@ struct SquirrelEntry
     {
     }
 };
-
-void initializeLogging()
-{
-    boost::log::add_file_log(boost::log::keywords::file_name = "DSCSModLoader.log",
-                             boost::log::keywords::format =
-                                 (boost::log::expressions::stream << "[" << std::setw(8) << std::setfill(' ')
-                                                                  << boost::log::trivial::severity << "] "
-                                                                  << boost::log::expressions::smessage),
-                             boost::log::keywords::auto_flush = true);
-    // TODO load from config
-    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
-}
-
-void Test(HSQUIRRELVM vm)
-{
-    std::map<int32_t, dscs::SeenData*>* data = dscs::getSeenData();
-
-    for (auto& seenData : *data)
-        std::cout << seenData.second->entryId << " " << seenData.second->seenState << " " << seenData.second->field2_0x6
-                  << std::endl;
-
-    data->at(9)->seenState = 0;
-}
-
-void DebugLog(HSQUIRRELVM vm, const SQChar* msg) { sq_getprintfunc(vm)(vm, msg); }
-
-void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
-{
-    char buffer[1024];
-    va_list args;
-    va_start(args, msg);
-    std::vsnprintf(buffer, 1024, msg, args);
-
-    BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
-}
 
 class DSCSModLoaderImpl : public DSCSModLoader
 {
@@ -135,6 +101,28 @@ public:
 };
 
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
+
+void initializeLogging()
+{
+    boost::log::add_file_log(boost::log::keywords::file_name = "DSCSModLoader.log",
+                             boost::log::keywords::format =
+                                 (boost::log::expressions::stream << "[" << std::setw(8) << std::setfill(' ')
+                                                                  << boost::log::trivial::severity << "] "
+                                                                  << boost::log::expressions::smessage),
+                             boost::log::keywords::auto_flush = true);
+    // TODO load from config
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
+}
+
+void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
+{
+    char buffer[1024];
+    va_list args;
+    va_start(args, msg);
+    std::vsnprintf(buffer, 1024, msg, args);
+
+    BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
+}
 
 DSCSModLoader& DSCSModLoader::getInstance() { return DSCSModLoaderImpl::instance; }
 
@@ -416,26 +404,27 @@ void DSCSModLoaderImpl::init()
 
     BOOST_LOG_TRIVIAL(info) << "initializing DSCSModLoader version 0.0.1...";
 
+    // debug console start
     // TODO make optional via config
     AllocConsole();
     freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
     freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
     freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+    // debug console end
 
-    auto* data = new dscs::DigisterData();
+    // auto* data = new dscs::DigisterData();
     // data->map.insert(std::make_pair("useDataBase", "1"));
     // data->map.insert(std::make_pair("defaultMap", "t3001"));
     // data->map.insert(std::make_pair("selectStoryMode", "1"));
     // data->map.insert(std::make_pair("windowsDisplayPlatform", "ORBIS"));
-    // data->map.insert(std::make_pair("isDispSpeed", "1"));*/
-    dscs::getDigisterMap()->map.insert(std::make_pair("digister", data));
-
-    redirectJump(&_squirrelInit, 0x1FA7AE);
+    // data->map.insert(std::make_pair("isDispSpeed", "1"));
+    // data->map.insert(std::make_pair("notFieldDelete", "1")); // crashes when opening menu?
+    // dscs::getDigisterMap()->map.insert(std::make_pair("digister", data));
 
     // script extensions start
-    addSquirrelFunction("Debug", "Log", SQUIRREL_AWAY(DebugLog));
+    redirectJump(&_squirrelInit, 0x1FA7AE);
 
-    addSquirrelFunction("Debug", "Test", SQUIRREL_AWAY(Test));
+    addSquirrelFunction("Debug", "Log", SQUIRREL_AWAY(dscs::modloader::DebugLog));
 
     addSquirrelFunction("Digimon", "GetScan", SQUIRREL_AWAY(dscs::digimon::GetScan));
     addSquirrelFunction("Digimon", "AddScan", SQUIRREL_AWAY(dscs::digimon::AddScan));
@@ -449,12 +438,14 @@ void DSCSModLoaderImpl::init()
     addSquirrelFunction("ModLoader", "StorageSetFloat", SQUIRREL_AWAY(dscs::modloader::StorageSetFloat));
     addSquirrelFunction("ModLoader", "StorageGetInt", SQUIRREL_AWAY(dscs::modloader::StorageGetInt));
     addSquirrelFunction("ModLoader", "StorageGetFloat", SQUIRREL_AWAY(dscs::modloader::StorageGetFloat));
-    //  script extensions end
+    // script extensions end
 
+    // custom archive list start
     redirectCall(&_archiveListInit, 0x2CF1BA);
     redirectJump(getBaseOffset() + 0x2CF2F1, 0x2CF1C6);
+    // custom archive list end
 
-    // custom save/load
+    // custom save/load start
     redirectJump(&_createSaveHook, 0x288990);
     redirectJump(&_writeSaveFileHook, 0x2bab20);
     redirectJump(&_loadSaveHook, 0x289bb0);
@@ -473,10 +464,11 @@ void DSCSModLoaderImpl::init()
         "customWork",
         [this](auto data) { readWorkTables(data); },
         [this] { return writeWorkTables(); });
+    // custom save/load end
 
     // loading and applying patch files
     BOOST_LOG_TRIVIAL(info) << "Loading patches...";
-    std::filesystem::path patches_path("patches");
+    std::filesystem::path patches_path(std::format("{}/{}", dscs::getResourceDir(), "/patches"));
     if (std::filesystem::exists(patches_path))
     {
         std::filesystem::directory_iterator patches(patches_path);
@@ -487,8 +479,8 @@ void DSCSModLoaderImpl::init()
 
     // loading plugins
     BOOST_LOG_TRIVIAL(info) << "Loading plugins...";
-    std::filesystem::path plugins_path("plugins");
-    if (std::filesystem::exists(patches_path))
+    std::filesystem::path plugins_path(std::format("{}/{}", dscs::getResourceDir(), "/plugins"));
+    if (std::filesystem::exists(plugins_path))
     {
         std::filesystem::directory_iterator plugins(plugins_path);
         for (auto plugin : plugins)

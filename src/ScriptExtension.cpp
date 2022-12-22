@@ -100,5 +100,8 @@ namespace dscs
             std::string string{ name };
             return DSCSModLoader::getInstance().getWorkTable(string).getFloat(flag);
         }
+
+        void DebugLog(HSQUIRRELVM vm, const SQChar* msg) { sq_getprintfunc(vm)(vm, msg); }
+
     } // namespace modloader
 } // namespace dscs
