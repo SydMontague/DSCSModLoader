@@ -397,7 +397,7 @@ void DSCSModLoaderImpl::loadPlugin(const std::filesystem::path path)
         return;
     }
 
-    BasePlugin* pluginInstance = getPluginFunc(this);
+    BasePlugin* pluginInstance = getPluginFunc(*this);
 
     const PluginInfo info = pluginInstance->getPluginInfo();
     BOOST_LOG_TRIVIAL(info) << std::format("Plugin {} {}.{}.{} loaded.",

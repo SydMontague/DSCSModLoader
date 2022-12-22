@@ -35,10 +35,10 @@ namespace dscs
         char name[72];
         int16_t memoryCost;
         int16_t field19_0x5e;
-        int16_t field21_0x60;
+        int16_t sortType;
         int16_t field23_0x62;
-        int16_t sortOrder;
-        int16_t field27_0x66;
+        int16_t sortGeneration;
+        int16_t sortName;
         int16_t level;
         int16_t levelCapBonus;
         int16_t levelCapBase;

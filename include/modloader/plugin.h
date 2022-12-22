@@ -15,21 +15,23 @@ struct PluginInfo;
 class DSCSModLoader;
 class BasePlugin;
 
-using EnableFunction    = void (*)();
-using GetPluginFunction = BasePlugin* (*)(DSCSModLoader*);
+using GetPluginFunction = BasePlugin* (*)(DSCSModLoader&);
 
 using CoSaveReadCallback  = std::function<void(std::vector<uint8_t>)>;
 using CoSaveWriteCallback = std::function<std::vector<uint8_t>()>;
 
-typedef struct Version
+struct Version
 {
     uint32_t major;
     uint32_t minor;
     uint32_t revision;
-} PluginVersion, APIVersion;
+};
 
 struct PluginInfo
 {
+    using APIVersion    = Version;
+    using PluginVersion = Version;
+
     APIVersion apiVersion;
     PluginVersion version;
     std::string name;
