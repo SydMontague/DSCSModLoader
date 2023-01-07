@@ -1,7 +1,9 @@
 #pragma once
+#include "dscs/AppContext.h"
 #include "dscs/DigisterMap.h"
 #include "dscs/GameContext.h"
 #include "dscs/GameSaveData.h"
+#include "dscs/ResourceManager.h"
 #include "dscs/SoundStruct.h"
 
 #include <map>
@@ -17,6 +19,10 @@ namespace dscs
     extern __declspec(dllexport) ScanData* setScanData(DigimonContext* context, int32_t digimonId, uint16_t value);
 
     extern __declspec(dllexport) SoundStruct* getSoundStruct();
+
+    extern __declspec(dllexport) AppContext* getAppContext();
+
+    extern __declspec(dllexport) ResourceManagerContext* getResourceManagerContext();
 
     // save stuff
     extern __declspec(dllexport) GameSaveData* getGameSaveData();
@@ -34,6 +40,14 @@ namespace dscs
     extern __declspec(dllexport) void decryptSaveFile(void* buffer, std::size_t size, uint64_t key);
 
     extern __declspec(dllexport) void endThread(int32_t returnValue);
+
+    // data stuff
+    extern __declspec(dllexport) float getTimeDelta(double* timer);
+
+    extern __declspec(dllexport) bool useTargetDelta();
+
+    extern __declspec(dllexport) int32_t getTargetFPS();
+
 } // namespace dscs
 
 namespace mediavision

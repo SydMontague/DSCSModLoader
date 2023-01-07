@@ -32,6 +32,7 @@
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/file.hpp>
 
 /* Types */
@@ -104,6 +105,22 @@ PTR_SteamAPI_Init SteamAPI_Init;
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 
 /* Functions/Methods */
+
+bool baseUpdateOverride(dscs::AppContext* context)
+{
+    using Func = bool (*)(dscs::ResourceManager*);
+    Func func  = (Func)(getBaseOffset() + 0x500EC0);
+
+    context->timeDelta = dscs::getTimeDelta(&context->timer);
+    if (dscs::useTargetDelta()) context->timeDelta = 1.0 / dscs::getTargetFPS();
+
+    *reinterpret_cast<float*>(getBaseOffset() + 0xC3AA58) = context->timeDelta;
+    *reinterpret_cast<float*>(getBaseOffset() + 0xC3AA5C) = context->timeDelta / 2;
+
+    func(dscs::getResourceManagerContext()->manager);
+    return true;
+}
+
 void initializeLogging()
 {
     boost::log::add_file_log(boost::log::keywords::file_name = "DSCSModLoader.log",
@@ -424,6 +441,8 @@ void DSCSModLoaderImpl::init()
     // data->map.insert(std::make_pair("notFieldDelete", "1")); // crashes when opening menu?
     // dscs::getDigisterMap()->map.insert(std::make_pair("digister", data));
     // Digister Map settings end
+
+    redirectJump(&baseUpdateOverride, 0x52b6d0);
 
     // script extensions start
     redirectJump(&_squirrelInit, 0x1FA7AE);

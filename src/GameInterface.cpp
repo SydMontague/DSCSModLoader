@@ -19,6 +19,13 @@ namespace dscs
         return f();
     }
 
+    AppContext* getAppContext() { return reinterpret_cast<AppContext*>(getBaseOffset() + 0xF208A0); }
+
+    ResourceManagerContext* getResourceManagerContext()
+    {
+        return reinterpret_cast<ResourceManagerContext*>(getBaseOffset() + 0xC09188);
+    }
+
     DigisterMap* getDigisterMap()
     {
         using Func   = DigisterMap* (*)();
@@ -38,6 +45,27 @@ namespace dscs
         using Func   = ScanData* (*)(DigimonContext*, int32_t, uint16_t);
         const Func f = (Func)(getBaseOffset() + 0x19aa60);
         return f(context, digimonId, value);
+    }
+
+    float getTimeDelta(double* timer)
+    {
+        using Func   = float (*)(double*);
+        const Func f = (Func)(getBaseOffset() + 0x5030d0);
+        return f(timer);
+    }
+
+    bool useTargetDelta()
+    {
+        using Func   = bool (*)();
+        const Func f = (Func)(getBaseOffset() + 0x51c8c0);
+        return f();
+    }
+
+    int32_t getTargetFPS()
+    {
+        using Func   = int32_t (*)();
+        const Func f = (Func)(getBaseOffset() + 0x51c8b0);
+        return f();
     }
 
     GameSaveData* getGameSaveData() { return *reinterpret_cast<GameSaveData**>(getBaseOffset() + 0xF20758); }
