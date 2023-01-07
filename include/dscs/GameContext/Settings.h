@@ -39,4 +39,4 @@ namespace dscs
         SettingsData data;
         SettingsData backup;
     };
-}
+} // namespace dscs

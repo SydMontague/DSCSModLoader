@@ -2,9 +2,8 @@
 
 #include <algorithm>
 #include <array>
-#include <string>
-
 #include <iostream>
+#include <string>
 
 class FlagTable
 {

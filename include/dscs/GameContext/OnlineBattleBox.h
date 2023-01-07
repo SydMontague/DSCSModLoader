@@ -1,6 +1,7 @@
 #pragma once
-#include <stdint.h>
 #include "DigimonContext.h"
+
+#include <stdint.h>
 
 typedef uint8_t undefined;
 
@@ -20,8 +21,8 @@ namespace dscs
         PartyEntry party[11];
     };
 
-    struct OnlineBattleBox_sub1 {
-
+    struct OnlineBattleBox_sub1
+    {
         uint32_t field1_0x8;
         uint32_t field2_0xc;
         undefined field3_0x10;

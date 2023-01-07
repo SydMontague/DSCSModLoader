@@ -1,12 +1,12 @@
 #pragma once
+#include "GameContext/DigiFarm.h"
+#include "GameContext/Digiline.h"
 #include "GameContext/DigimonContext.h"
 #include "GameContext/Inventory.h"
-#include "GameContext/Settings.h"
-#include "GameContext/Player.h"
-#include "GameContext/DigiFarm.h"
-#include "GameContext/Quest.h"
-#include "GameContext/Digiline.h"
 #include "GameContext/OnlineBattleBox.h"
+#include "GameContext/Player.h"
+#include "GameContext/Quest.h"
+#include "GameContext/Settings.h"
 #include "GameContext/UserStats.h"
 
 #include <stdint.h>

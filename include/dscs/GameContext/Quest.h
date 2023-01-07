@@ -26,8 +26,8 @@ namespace dscs
         uint32_t field5_0x14;
     };
 
-    struct quest_para_sub3 {
-
+    struct quest_para_sub3
+    {
         int32_t field4_0x38;
         int32_t field5_0x3c;
         int32_t field6_0x40;

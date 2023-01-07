@@ -1,10 +1,9 @@
 #pragma once
 
-#include <array>
-#include <string>
 #include <algorithm>
-
+#include <array>
 #include <iostream>
+#include <string>
 
 class WorkTable
 {

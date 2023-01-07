@@ -36,7 +36,6 @@
 
 /* Types */
 using PTR_SteamAPI_Init = bool (*)();
-PTR_SteamAPI_Init SteamAPI_Init;
 
 struct SquirrelEntry
 {
@@ -100,8 +99,11 @@ public:
     static bool bootstrap();
 };
 
+/* Variables */
+PTR_SteamAPI_Init SteamAPI_Init;
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 
+/* Functions/Methods */
 void initializeLogging()
 {
     boost::log::add_file_log(boost::log::keywords::file_name = "DSCSModLoader.log",
@@ -412,6 +414,7 @@ void DSCSModLoaderImpl::init()
     freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
     // debug console end
 
+    // Digister Map settings start
     // auto* data = new dscs::DigisterData();
     // data->map.insert(std::make_pair("useDataBase", "1"));
     // data->map.insert(std::make_pair("defaultMap", "t3001"));
@@ -420,6 +423,7 @@ void DSCSModLoaderImpl::init()
     // data->map.insert(std::make_pair("isDispSpeed", "1"));
     // data->map.insert(std::make_pair("notFieldDelete", "1")); // crashes when opening menu?
     // dscs::getDigisterMap()->map.insert(std::make_pair("digister", data));
+    // Digister Map settings end
 
     // script extensions start
     redirectJump(&_squirrelInit, 0x1FA7AE);

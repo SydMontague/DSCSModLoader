@@ -1,9 +1,10 @@
 #pragma once
 #include <stdint.h>
+
 #include <vector>
 
-
-namespace dscs {
+namespace dscs
+{
     struct InventoryItem
     {
         bool isFilled;
@@ -23,4 +24,4 @@ namespace dscs {
         std::vector<InventoryItem*> unk1;
         std::vector<InventoryItem*> unk2;
     };
-}
+} // namespace dscs

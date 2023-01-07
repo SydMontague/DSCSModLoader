@@ -27,7 +27,6 @@ namespace dscs
 
     extern __declspec(dllexport) std::string getResourceDir(std::string*);
 
-
     extern __declspec(dllexport) void createSaveDir();
 
     extern __declspec(dllexport) void encryptSaveFile(void* buffer, std::size_t size, uint64_t key);

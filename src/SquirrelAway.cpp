@@ -1,6 +1,7 @@
 #pragma once
-#include <squirrel/squirrel.h>
 #include "modloader/squirrel.h"
+
+#include <squirrel/squirrel.h>
 #include <stdint.h>
 
 #include <tuple>

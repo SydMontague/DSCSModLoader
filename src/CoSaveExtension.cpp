@@ -42,8 +42,7 @@ std::vector<uint8_t> writeSeenData()
 void readScanData(std::vector<uint8_t> data, bool isHM)
 {
     // don't do anything with empty data
-    if (data.empty())
-        return;
+    if (data.empty()) return;
 
     struct LocalScanData
     {
