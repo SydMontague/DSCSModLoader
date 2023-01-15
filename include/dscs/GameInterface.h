@@ -41,6 +41,8 @@ namespace dscs
 
     extern __declspec(dllexport) void endThread(int32_t returnValue);
 
+    extern __declspec(dllexport) void addArchiveOverride(bool isPacked, const char* name);
+
     // data stuff
     extern __declspec(dllexport) float getTimeDelta(double* timer);
 

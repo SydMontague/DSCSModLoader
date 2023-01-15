@@ -1,5 +1,7 @@
 ﻿#include "DSCSModLoader.h"
 
+#include <toml++/toml.h>
+
 #include "CoSave.h"
 #include "CoSaveExtension.hpp"
 #include "ScriptExtension.h"
@@ -55,6 +57,7 @@ struct SquirrelEntry
 class DSCSModLoaderImpl : public DSCSModLoader
 {
 private:
+    toml::table config;
     CoSaveImpl coSave;
     std::unordered_map<std::string, std::vector<SquirrelEntry>> squirrelMap;
     std::vector<BasePlugin*> plugins;
@@ -74,6 +77,8 @@ private:
     void readFlagTables(std::vector<uint8_t>);
     std::vector<uint8_t> writeWorkTables();
     void readWorkTables(std::vector<uint8_t>);
+    void loadConfig();
+    void initializeLogging();
 
 public:
     DSCSModLoaderImpl(const DSCSModLoaderImpl&) = delete;
@@ -121,16 +126,19 @@ bool baseUpdateOverride(dscs::AppContext* context)
     return true;
 }
 
-void initializeLogging()
+void DSCSModLoaderImpl::initializeLogging()
 {
+    constexpr auto defaultLevel = boost::log::trivial::info;
+    const auto logLevel         = config["ModLoader"]["logLevel"].value_or((int64_t)defaultLevel);
+
     boost::log::add_file_log(boost::log::keywords::file_name = "DSCSModLoader.log",
                              boost::log::keywords::format =
                                  (boost::log::expressions::stream << "[" << std::setw(8) << std::setfill(' ')
                                                                   << boost::log::trivial::severity << "] "
                                                                   << boost::log::expressions::smessage),
                              boost::log::keywords::auto_flush = true);
-    // TODO load from config
-    boost::log::core::get()->set_filter(boost::log::trivial::severity >= boost::log::trivial::info);
+
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= logLevel);
 }
 
 void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
@@ -234,6 +242,28 @@ void DSCSModLoaderImpl::archiveListInit()
     GetControllerTypeFunc getControllerType = (GetControllerTypeFunc)(getBaseOffset() + 0x57BFF0);
 
     auto controllerType = getControllerType();
+    auto packed         = config["Archive"]["packed"].as_array();
+    auto folder         = config["Archive"]["folder"].as_array();
+
+    if (packed)
+    {
+        for (auto&& entry : *packed)
+        {
+            const auto name = entry.as_string()->get().c_str();
+            addArchive(name);
+            BOOST_LOG_TRIVIAL(info) << "Packed Archive " << name << " added.";
+        }
+    }
+    if (folder)
+    {
+        for (auto&& entry : *folder)
+        {
+            const auto name = entry.as_string()->get().c_str();
+            addArchive(name);
+            dscs::addArchiveOverride(false, name);
+            BOOST_LOG_TRIVIAL(info) << "Folder Archive " << name << " added.";
+        }
+    }
 
     addArchive("DSDBmod");
     addArchive("DSDBP");
@@ -417,18 +447,33 @@ void DSCSModLoaderImpl::loadPlugin(const std::filesystem::path path)
     pluginInstance->onEnable();
 }
 
+void DSCSModLoaderImpl::loadConfig()
+{
+    try
+    {
+        config = toml::parse_file("config.toml");
+    }
+    catch (const toml::parse_error& err)
+    {
+        config = toml::table();
+    }
+}
+
 void DSCSModLoaderImpl::init()
 {
+    loadConfig();
     initializeLogging();
 
     BOOST_LOG_TRIVIAL(info) << "initializing DSCSModLoader version 0.0.1...";
 
     // debug console start
-    // TODO make optional via config
-    AllocConsole();
-    freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
-    freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
-    freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+    if (config["ModLoader"]["enableConsole"].value_or(false))
+    {
+        AllocConsole();
+        freopen_s((FILE**)stdout, "CONOUT$", "w", stdout);
+        freopen_s((FILE**)stderr, "CONOUT$", "w", stderr);
+        freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
+    }
     // debug console end
 
     // Digister Map settings start

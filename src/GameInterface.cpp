@@ -119,6 +119,15 @@ namespace dscs
         return f(str);
     }
 
+    extern __declspec(dllexport) void addArchiveOverride(bool isPacked, const char* name) {
+        auto manager = getResourceManagerContext()->manager;
+        
+        using Func   = void(*)(ResourceManager*, bool, const char*);
+        const Func f = (Func)(getBaseOffset() + 0x4FD150);
+
+        f(manager, isPacked, name);
+    }
+
     FarmSaveEntry& FarmSaveEntry::operator=(const PartyEntry& entry)
     {
         this->isFilled   = entry.isFilled;

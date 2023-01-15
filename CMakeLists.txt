@@ -20,6 +20,17 @@ CPMAddPackage(
   GIT_TAG "boost-1.80.0"
 )
 
+CPMAddPackage(
+  NAME tomlplusplus
+  VERSION 3.2.0
+  GITHUB_REPOSITORY "marzer/tomlplusplus"
+)
+
+if(tomlplusplus_ADDED)
+    add_library(tomlplusplus INTERFACE)
+    target_include_directories(tomlplusplus INTERFACE ${tomlplusplus_SOURCE_DIR}/include/)
+endif()
+
 # --- Building ---
 add_library (DSCSModLoader SHARED)
 
@@ -43,4 +54,4 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(DSCSModLoader PRIVATE Boost::log_setup)
+target_link_libraries(DSCSModLoader PRIVATE Boost::log_setup tomlplusplus)
