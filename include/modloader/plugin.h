@@ -65,6 +65,11 @@ public:
     virtual FlagTable& getFlagTable(std::string& name) = 0;
     virtual WorkTable& getWorkTable(std::string& name) = 0;
 
+    virtual float getSpeedup() = 0;
+    virtual void setSpeedup(float speedup) = 0;
+    virtual int32_t getFPSLimit() = 0;
+    virtual void setFPSLimit(int32_t fpsLimit) = 0;
+
 public:
     static DSCSModLoader& getInstance();
 };

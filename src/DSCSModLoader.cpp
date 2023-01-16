@@ -65,6 +65,10 @@ private:
     std::map<std::string, FlagTable> flagTables;
     std::map<std::string, WorkTable> workTables;
 
+    float speedup    = 1.0f;
+    int32_t fpsLimit = 60;
+
+private:
     DSCSModLoaderImpl(){};
 
     void loadPlugin(std::filesystem::path);
@@ -91,6 +95,11 @@ public:
     FlagTable& getFlagTable(std::string& name);
     WorkTable& getWorkTable(std::string& name);
 
+    float getSpeedup();
+    void setSpeedup(float speedup);
+
+    int32_t getFPSLimit();
+    void setFPSLimit(int32_t fpsLimit);
     // static functions to be used as function pointers
 private:
     static void _squirrelInit(HSQUIRRELVM vm);
@@ -110,7 +119,6 @@ PTR_SteamAPI_Init SteamAPI_Init;
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 
 /* Functions/Methods */
-
 bool baseUpdateOverride(dscs::AppContext* context)
 {
     using Func = bool (*)(dscs::ResourceManager*);
@@ -119,11 +127,45 @@ bool baseUpdateOverride(dscs::AppContext* context)
     context->timeDelta = dscs::getTimeDelta(&context->timer);
     if (dscs::useTargetDelta()) context->timeDelta = 1.0 / dscs::getTargetFPS();
 
+    context->timeDelta *= DSCSModLoader::getInstance().getSpeedup();
+
     *reinterpret_cast<float*>(getBaseOffset() + 0xC3AA58) = context->timeDelta;
     *reinterpret_cast<float*>(getBaseOffset() + 0xC3AA5C) = context->timeDelta / 2;
 
     func(dscs::getResourceManagerContext()->manager);
     return true;
+}
+
+void setVSync(bool enable)
+{
+    using Func = bool (*)(int32_t);
+    Func proc  = (Func)dscs::wglGetProcAddress("wglSwapIntervalEXT");
+    proc(enable ? 1 : 0);
+}
+
+void setMaxFPSOverride(int32_t fps)
+{
+    if (fps == 60) fps = DSCSModLoader::getInstance().getFPSLimit();
+    *reinterpret_cast<int32_t*>(getBaseOffset() + 0xBF5F4C) = fps;
+}
+
+int32_t DSCSModLoaderImpl::getFPSLimit() { return fpsLimit; }
+
+void DSCSModLoaderImpl::setFPSLimit(int32_t fpsLimit)
+{
+    if (fpsLimit <= 0) return;
+
+    this->fpsLimit = fpsLimit;
+    setMaxFPSOverride(fpsLimit);
+}
+
+float DSCSModLoaderImpl::getSpeedup() { return speedup; }
+
+void DSCSModLoaderImpl::setSpeedup(float speedup)
+{
+    if (speedup <= 0.1f && speedup >= 20.0f) return;
+
+    this->speedup = speedup;
 }
 
 void DSCSModLoaderImpl::initializeLogging()
@@ -487,7 +529,19 @@ void DSCSModLoaderImpl::init()
     // dscs::getDigisterMap()->map.insert(std::make_pair("digister", data));
     // Digister Map settings end
 
+    // Patches start
+    if (config["Patches"]["DisableVSync"].value_or(false)) patchBytes({ 0x00 }, 0x2786eb);
+    setFPSLimit(config["Patches"]["FPSLimit"].value_or(60));
+    setSpeedup(config["Patches"]["Speedup"].value_or(1.0f));
+
+    patchBytes({ 0xB9 }, 0x2d0233);                   // fix custom keyboard layout crash, stol -> stoul
+    patchBytes({ 0x63, 0x7D, 0x6B, 0x00 }, 0x582cf1); // FPS Hack #1, read frame delta
+    patchBytes({ 0xD9, 0x06, 0xA1, 0x00 }, 0x22a37f); // FPS Hack #2, read frame delta / 2
+    patchBytes({ 0x65, 0x19, 0xA1, 0x00 }, 0x2290f3); // FPS Hack #3, read frame delta / 2
+    // Patches end
+
     redirectJump(&baseUpdateOverride, 0x52b6d0);
+    redirectJump(&setMaxFPSOverride, 0x27b150);
 
     // script extensions start
     redirectJump(&_squirrelInit, 0x1FA7AE);

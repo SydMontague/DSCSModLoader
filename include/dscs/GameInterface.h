@@ -43,6 +43,8 @@ namespace dscs
 
     extern __declspec(dllexport) void addArchiveOverride(bool isPacked, const char* name);
 
+    extern __declspec(dllexport) void* wglGetProcAddress(const char* name);
+
     // data stuff
     extern __declspec(dllexport) float getTimeDelta(double* timer);
 

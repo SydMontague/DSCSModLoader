@@ -105,27 +105,35 @@ namespace dscs
         return f(returnValue);
     }
 
-    extern __declspec(dllexport) char* getResourceDir()
+    char* getResourceDir()
     {
         using Func   = char* (*)(void);
         const Func f = (Func)(getBaseOffset() + 0x4f8f60);
         return f();
     }
 
-    extern __declspec(dllexport) std::string getResourceDir(std::string* str)
+    std::string getResourceDir(std::string* str)
     {
         using Func   = std::string (*)(std::string*);
         const Func f = (Func)(getBaseOffset() + 0x5F70F0);
         return f(str);
     }
 
-    extern __declspec(dllexport) void addArchiveOverride(bool isPacked, const char* name) {
+    void addArchiveOverride(bool isPacked, const char* name) {
         auto manager = getResourceManagerContext()->manager;
         
         using Func   = void(*)(ResourceManager*, bool, const char*);
         const Func f = (Func)(getBaseOffset() + 0x4FD150);
 
         f(manager, isPacked, name);
+    }
+
+    void* wglGetProcAddress(const char* name)
+    {
+        using Func   = void* (*)(const char*);
+        const Func f = *(Func*)(getBaseOffset() + 0x8bfc48);
+
+        return f(name);
     }
 
     FarmSaveEntry& FarmSaveEntry::operator=(const PartyEntry& entry)
