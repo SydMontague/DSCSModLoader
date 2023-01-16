@@ -119,6 +119,8 @@ PTR_SteamAPI_Init SteamAPI_Init;
 DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 
 /* Functions/Methods */
+
+/* helper functions */
 bool baseUpdateOverride(dscs::AppContext* context)
 {
     using Func = bool (*)(dscs::ResourceManager*);
@@ -149,6 +151,17 @@ void setMaxFPSOverride(int32_t fps)
     *reinterpret_cast<int32_t*>(getBaseOffset() + 0xBF5F4C) = fps;
 }
 
+void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
+{
+    char buffer[1024];
+    va_list args;
+    va_start(args, msg);
+    std::vsnprintf(buffer, 1024, msg, args);
+
+    BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
+}
+
+/* DSCSModLoaderImpl implementations */
 int32_t DSCSModLoaderImpl::getFPSLimit() { return fpsLimit; }
 
 void DSCSModLoaderImpl::setFPSLimit(int32_t fpsLimit)
@@ -172,25 +185,18 @@ void DSCSModLoaderImpl::initializeLogging()
 {
     constexpr auto defaultLevel = boost::log::trivial::info;
     const auto logLevel         = config["ModLoader"]["logLevel"].value_or((int64_t)defaultLevel);
+    const auto format =
+        (boost::log::expressions::stream << "[" << std::setw(8) << std::setfill(' ') << boost::log::trivial::severity
+                                         << "] " << boost::log::expressions::smessage);
 
-    boost::log::add_file_log(boost::log::keywords::file_name = "DSCSModLoader.log",
-                             boost::log::keywords::format =
-                                 (boost::log::expressions::stream << "[" << std::setw(8) << std::setfill(' ')
-                                                                  << boost::log::trivial::severity << "] "
-                                                                  << boost::log::expressions::smessage),
+    boost::log::add_file_log(boost::log::keywords::file_name  = "DSCSModLoader.log",
+                             boost::log::keywords::format     = format,
                              boost::log::keywords::auto_flush = true);
+    boost::log::add_console_log(std::cout,
+                                boost::log::keywords::format     = format,
+                                boost::log::keywords::auto_flush = true);
 
     boost::log::core::get()->set_filter(boost::log::trivial::severity >= logLevel);
-}
-
-void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
-{
-    char buffer[1024];
-    va_list args;
-    va_start(args, msg);
-    std::vsnprintf(buffer, 1024, msg, args);
-
-    BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
 }
 
 DSCSModLoader& DSCSModLoader::getInstance() { return DSCSModLoaderImpl::instance; }
@@ -369,7 +375,7 @@ void DSCSModLoaderImpl::squirrelInit(HSQUIRRELVM vm)
             sq_newslot(vm, -3, SQFalse);
             sq_pop(vm, 1);
 
-            BOOST_LOG_TRIVIAL(info) << std::format("Function '{}.{}' added", key, function.name);
+            BOOST_LOG_TRIVIAL(debug) << std::format("Function '{}.{}' added", key, function.name);
         }
 
         // root table
@@ -504,10 +510,6 @@ void DSCSModLoaderImpl::loadConfig()
 void DSCSModLoaderImpl::init()
 {
     loadConfig();
-    initializeLogging();
-
-    BOOST_LOG_TRIVIAL(info) << "initializing DSCSModLoader version 0.0.1...";
-
     // debug console start
     if (config["ModLoader"]["enableConsole"].value_or(false))
     {
@@ -517,17 +519,9 @@ void DSCSModLoaderImpl::init()
         freopen_s((FILE**)stdin, "CONIN$", "r", stdin);
     }
     // debug console end
+    initializeLogging();
 
-    // Digister Map settings start
-    // auto* data = new dscs::DigisterData();
-    // data->map.insert(std::make_pair("useDataBase", "1"));
-    // data->map.insert(std::make_pair("defaultMap", "t3001"));
-    // data->map.insert(std::make_pair("selectStoryMode", "1"));
-    // data->map.insert(std::make_pair("windowsDisplayPlatform", "ORBIS"));
-    // data->map.insert(std::make_pair("isDispSpeed", "1"));
-    // data->map.insert(std::make_pair("notFieldDelete", "1")); // crashes when opening menu?
-    // dscs::getDigisterMap()->map.insert(std::make_pair("digister", data));
-    // Digister Map settings end
+    BOOST_LOG_TRIVIAL(info) << "initializing DSCSModLoader version 0.0.1...";
 
     // Patches start
     if (config["Patches"]["DisableVSync"].value_or(false)) patchBytes({ 0x00 }, 0x2786eb);
