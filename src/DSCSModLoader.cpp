@@ -121,6 +121,15 @@ DSCSModLoaderImpl DSCSModLoaderImpl::instance;
 /* Functions/Methods */
 
 /* helper functions */
+std::string getWindowsUsername()
+{
+    char buffer[128];
+    DWORD bufferSize = 128;
+    GetUserNameA(buffer, &bufferSize);
+
+    return buffer;
+}
+
 bool baseUpdateOverride(dscs::AppContext* context)
 {
     using Func = bool (*)(dscs::ResourceManager*);
@@ -159,6 +168,24 @@ void printfunc(HSQUIRRELVM vm, const SQChar* msg, ...)
     std::vsnprintf(buffer, 1024, msg, args);
 
     BOOST_LOG_TRIVIAL(info) << "[Squirrel] " << buffer;
+}
+
+/* DSCSModLoaderImpl static functions */
+void DSCSModLoaderImpl::_squirrelInit(HSQUIRRELVM vm) { instance.squirrelInit(vm); }
+void DSCSModLoaderImpl::_archiveListInit() { instance.archiveListInit(); }
+void DSCSModLoaderImpl::_readSaveFileHook() { instance.coSave.readSaveFileHook(); }
+void DSCSModLoaderImpl::_writeSaveFileHook() { instance.coSave.writeSaveFileHook(); }
+void DSCSModLoaderImpl::_loadSaveHook(void* empty, dscs::Savegame& save) { instance.coSave.loadSaveHook(empty, save); }
+void DSCSModLoaderImpl::_createSaveHook(void* empty, dscs::Savegame& save)
+{
+    instance.coSave.createSaveHook(empty, save);
+};
+
+bool DSCSModLoaderImpl::bootstrap()
+{
+    const bool retVal = SteamAPI_Init();
+    instance.init();
+    return retVal;
 }
 
 /* DSCSModLoaderImpl implementations */
@@ -255,16 +282,6 @@ WorkTable& DSCSModLoaderImpl::getWorkTable(std::string& name)
     return workTables.emplace(name, name).first->second;
 }
 
-void DSCSModLoaderImpl::_squirrelInit(HSQUIRRELVM vm) { instance.squirrelInit(vm); }
-void DSCSModLoaderImpl::_archiveListInit() { instance.archiveListInit(); }
-void DSCSModLoaderImpl::_readSaveFileHook() { instance.coSave.readSaveFileHook(); }
-void DSCSModLoaderImpl::_writeSaveFileHook() { instance.coSave.writeSaveFileHook(); }
-void DSCSModLoaderImpl::_loadSaveHook(void* empty, dscs::Savegame& save) { instance.coSave.loadSaveHook(empty, save); }
-void DSCSModLoaderImpl::_createSaveHook(void* empty, dscs::Savegame& save)
-{
-    instance.coSave.createSaveHook(empty, save);
-};
-
 void DSCSModLoaderImpl::addCoSaveHook(std::string name, CoSaveReadCallback read, CoSaveWriteCallback write)
 {
     coSave.addCoSaveHook(name, read, write);
@@ -272,6 +289,18 @@ void DSCSModLoaderImpl::addCoSaveHook(std::string name, CoSaveReadCallback read,
 
 void DSCSModLoaderImpl::archiveListInit()
 {
+    bool isSteamuser = getWindowsUsername().compare("steamuser") == 0;
+    bool doBlackFix  = config["Patches"]["SteamDeckFix"].value_or(isSteamuser);
+
+    if (doBlackFix)
+    {
+        BOOST_LOG_TRIVIAL(info) << "Running Gamescope/Steam Deck blackscreen fix.";
+        auto window = WindowFromDC(*(HDC*)(getBaseOffset() + 0xc365a8));
+        window      = GetParent(window);
+        ShowWindow(window, SW_HIDE);
+        ShowWindow(window, SW_SHOW);
+    }
+
     BOOST_LOG_TRIVIAL(info) << "initializing archive list...";
 
     uint64_t* archiveCount = (uint64_t*)(getBaseOffset() + 0xF20770);
@@ -605,13 +634,6 @@ void DSCSModLoaderImpl::init()
     else { BOOST_LOG_TRIVIAL(info) << "Plugins directory not found, skipping."; }
 
     BOOST_LOG_TRIVIAL(info) << "DSCSModLoader initialized!";
-}
-
-bool DSCSModLoaderImpl::bootstrap()
-{
-    const bool retVal = SteamAPI_Init();
-    instance.init();
-    return retVal;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
