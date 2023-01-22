@@ -342,7 +342,6 @@ void DSCSModLoaderImpl::archiveListInit()
         }
     }
 
-    addArchive("DSDBmod");
     addArchive("DSDBP");
     if (controllerType == 1) addArchive("DSDBSP");
     addArchive("DSDBS");
