@@ -1,0 +1,32 @@
+[ModLoader]
+# Opens a console window for log messages to appear in
+enableConsole=false
+# Sets the log level filter
+# 0 -> trace
+# 1 -> debug
+# 2 -> info
+# 3 -> warning
+# 4 -> error
+# 5 -> fatal
+logLevel=2
+
+# Packed archives have priority over folders, earlier entries have priority over later entires.
+# Custom archives always have priority over vanilla archives.
+[Archive]
+# A list of custom .steam.mvgl files for the game to load assets from
+packed=[]
+# A list of custom .steam folders for the game to load assets from
+# "DSDBmod" will look for a folder "DSDBmod.steam" in the resources folder
+folder=["DSDBmod"]
+
+[Patches]
+# Fixes the black screen issue when playing the game on Steam Deck/Gamescope
+# This patch is automatically active when it detects being run in Proton, 
+# unless explicitly disabled.
+# SteamDeckFix=true
+# Disables VSync, allowing a higher frame rate than your screen refresh rate.
+DisableVSync=false
+# The default maximum allowed framerate
+FPSLimit=120
+# Factor to speedup or slowdown the game with
+Speedup=1.0
