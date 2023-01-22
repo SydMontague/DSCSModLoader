@@ -307,7 +307,10 @@ void CoSaveImpl::loadSave(void* empty, dscs::Savegame& save)
 
     std::copy(std::begin(save.flags), std::end(save.flags), std::begin(context->flags->flags));
     for (uint32_t i = 0; i < 400; i++)
-        if (save.seenData[i].entryId != 0) *seenData->at(save.seenData[i].entryId) = save.seenData[i];
+    {
+        const auto entryId = save.seenData[i].entryId;
+        if (seenData->contains(entryId)) *seenData->at(entryId) = save.seenData[i];
+    }
     std::copy(std::begin(save.work), std::end(save.work), std::begin(context->work->flags));
 
     context->settings->data  = save.settings;

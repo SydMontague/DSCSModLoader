@@ -21,7 +21,7 @@ void readSeenData(std::vector<uint8_t> data)
     for (std::size_t i = 0; i < localData->size; i++)
     {
         auto& entry = localData->data[i];
-        if (entry.entryId != 0) *seenData->at(entry.entryId) = entry;
+        if (seenData->contains(entry.entryId)) *seenData->at(entry.entryId) = entry;
     }
 }
 
