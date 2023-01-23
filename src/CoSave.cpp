@@ -292,10 +292,13 @@ void CoSaveImpl::loadStorySave(dscs::StorySave& save, bool isHM)
         *digiline->unk2[i] = save.digiline2[i];
     for (int32_t i = 0; i < 30; i++)
         *digiline->unk3[i] = save.digiline3[i];
-    std::copy_if(std::begin(save.digilineUnk),
-                 std::end(save.digilineUnk),
-                 digiline->field4_0x50.begin(),
-                 [](uint32_t val) { return val != 0; });
+
+    for (int32_t i = 0; i < 90; i++) {
+        if (save.digilineUnk[i] == 0)
+            continue;
+
+        digiline->field4_0x50.push_back(save.digilineUnk[i]);
+    }
     for (int32_t i = 0; i < 90; i++)
         *digiline->field5_0x68[i] = save.digiline4[i];
 }
