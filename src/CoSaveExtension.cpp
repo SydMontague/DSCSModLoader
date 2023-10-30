@@ -51,7 +51,7 @@ void readScanData(std::vector<uint8_t> data, bool isHM)
     };
 
     auto context             = dscs::getGameContext();
-    auto digimon             = isHM ? context->digimonHM : context->digimonHM;
+    auto digimon             = isHM ? context->digimonHM : context->digimonCS;
     auto scanData            = digimon->scanData;
     LocalScanData* localData = reinterpret_cast<LocalScanData*>(data.data());
 
@@ -66,7 +66,7 @@ std::vector<uint8_t> writeScanData(bool isHM)
 {
     std::vector<uint8_t> data;
     auto context     = dscs::getGameContext();
-    auto digimon     = isHM ? context->digimonHM : context->digimonHM;
+    auto digimon     = isHM ? context->digimonHM : context->digimonCS;
     auto scanData    = digimon->scanData;
     std::size_t size = scanData.size();
 
