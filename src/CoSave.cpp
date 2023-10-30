@@ -6,6 +6,13 @@
 #include <filesystem>
 #include <format>
 
+// force Windows 7 WINAPI, so Boost::log works. Seems like a Boost bug
+#define BOOST_USE_WINAPI_VERSION 0x0601
+#include <boost/log/core.hpp>
+#include <boost/log/trivial.hpp>
+
+constexpr uint32_t CURRENT_COSAVE_VERSION = 1;
+
 struct CoSaveContainer
 {
     uint32_t size;
@@ -60,6 +67,15 @@ bool CoSaveImpl::readCoSave()
 
     if (header->magic != 'DSCS') return false;
 
+    if (header->version > CURRENT_COSAVE_VERSION)
+    {
+        BOOST_LOG_TRIVIAL(error) << std::format(
+            "Cosave has version {}, but the DSCSModLoader only supports up to {}. Is your DSCSModLoader outdated?",
+            header->version,
+            CURRENT_COSAVE_VERSION);
+        return false;
+    }
+
     for (int32_t i = 0; i < header->containerCount; i++)
     {
         CoSaveContainer container = header->container[i];
@@ -89,7 +105,7 @@ bool CoSaveImpl::writeCoSave()
     std::vector<uint8_t> containerData;
     CoSave save;
     save.magic          = 'DSCS';
-    save.version        = 1;
+    save.version        = CURRENT_COSAVE_VERSION;
     save.containerCount = rawContainer.size();
     save.reserved       = 0;
 
@@ -293,9 +309,9 @@ void CoSaveImpl::loadStorySave(dscs::StorySave& save, bool isHM)
     for (int32_t i = 0; i < 30; i++)
         *digiline->unk3[i] = save.digiline3[i];
 
-    for (int32_t i = 0; i < 90; i++) {
-        if (save.digilineUnk[i] == 0)
-            continue;
+    for (int32_t i = 0; i < 90; i++)
+    {
+        if (save.digilineUnk[i] == 0) continue;
 
         digiline->field4_0x50.push_back(save.digilineUnk[i]);
     }
